@@ -808,7 +808,7 @@ const fobject= {};
 exports.fancyMarketTypeData= async (req,res) =>{
     
   
-       await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
+       await DB.FancyOdds.find({eventId:req.body.eventId}).sort( { "marketName": -1 } ).then((marketType)=>{
     
             const fanceydata =[];
       var datafancy = marketType.map(async(item)=>{
@@ -1004,7 +1004,7 @@ exports.storeMarketType = async (req,res)=>{
 //get DBliveEvents
 exports.getDbliveEvents = async (req,res)=>{
 
-   await DB.event.find().then((events)=>{
+   await DB.event.find().sort( { "OpenDate": -1 } ).then((events)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
