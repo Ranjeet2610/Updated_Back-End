@@ -14,6 +14,7 @@ var refreshTokens = {}
 
 const { hashSync, genSaltSync, compareSync } = require("bcryptjs");
 const { sign } = require("jsonwebtoken");
+const { forEachRight, result } = require("lodash");
 
 /**
  * @author: Sopra Steria
@@ -1887,4 +1888,57 @@ exports.adminUserPL = async (req,res) =>{
         }).catch ((err)=> {
             return res.status(500).json({ success: false, error: err }).end('');
         });
+    }
+
+    //Code by Harry
+    exports.getAllBetting = async (req, res) => {
+        try {
+            let eventID = req.query.event_id;
+            if(!eventID){
+                return  res.send({status:false, message:"Kindly share the event id for getting the data"});
+            }
+            DB.betting.find({eventID: eventID }).then(result =>{
+                return res.status(200).json({ status: 'Success', "data":result});
+            });
+
+        } catch (err) {
+            return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+        }
+    }
+    exports.getUserInfo = async (req, res) => {
+        try {
+            let userId = req.query.userId;
+            if(!userId) {
+                return  res.send({status:false, message:"Kindly share the user id for getting the data"});
+            }
+            DB.user.find({_id: userId}, 'Master master Admin admin superAdmin superadmin').then(result =>{
+                return res.status(200).json({ status: 'Success', "data":result});
+            });
+        } catch (err) {
+            return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+        }
+    }
+    exports.getBettingBasedOnMaster = async (req, res) => {
+        try {
+            let master = req.query.master;
+            let eventId = req.query.event_id;
+            if(!master || !eventId){
+                return  res.send({status:false, message:"Kindly check the data"});
+            }
+            let user = await DB.user.find({$or:[{'admin':master}, {'master': master}, {'superadmin': master}]}, '_id').then (result=> {
+                return result;
+            });
+
+            DB.betting.find({
+                $and: [
+                    {'userid': {$in: user.map(e => e._id)}},
+                    {'eventID': eventId}
+                ]
+            }).then(result => {
+                return res.status(200).json({ status: 'Success', "data":result});
+            })
+        } catch (error) {
+            return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
+        }
+
     }
