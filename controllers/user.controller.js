@@ -1897,21 +1897,56 @@ exports.adminUserPL = async (req,res) =>{
             if(!eventID){
                 return  res.send({status:false, message:"Kindly share the event id for getting the data"});
             }
-            DB.betting.find({eventID: eventID }).then(result =>{
-                return res.status(200).json({ status: 'Success', "data":result});
-            });
+            
+            DB.betting.aggregate([
+                { 
+                    "$match": { "eventID": parseInt(eventID) } 
+                },
+                {
+                  $lookup: {
+                    from: "users", 
+                    localField: "userid",
+                    foreignField: "_id",
+                    as: "userInfo"
+                  }
+                }, {
+                    $project: {
+                        "__v": 0,
+                        "userInfo._id": 0,
+                        "userInfo.__v": 0,
+                        "userInfo.createdAt":0,
+                        "userInfo.status":0,
+                        "userInfo.walletBalance":0,
+                        "userInfo.exposure":0,
+                        "userInfo.profitLossChips":0,
+                        "userInfo.creditLimit":0,
+                        "userInfo.creditGiven":0,
+                        "userInfo.freeChips":0,
+                        "userInfo.enableBetting":0,
+                        "userInfo.blocked": 0,
+                        "userInfo.Commission":0,
+                        "userInfo.sessionCommission":0,
+                        "userInfo.ref":0,
+                        "userInfo.userSportsInfo":0,
+                        "userInfo.completedCasinoGame":0,
+                        "userInfo.winCasinoGame":0,
+                        "userInfo.userName":0,
+                        "userInfo.Name":0,
+                        "userInfo.password":0,
+                        "userInfo.passwordString":0,
+                    }
+                }
+              ]).then(results => {
+                    return res.status(200).json({ status: 'Success', "data": results});
+              });
 
         } catch (err) {
             return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
         }
     }
-    exports.getUserInfo = async (req, res) => {
+    exports.getAllMasterandSupermaster = async (req, res) => {
         try {
-            let userId = req.query.userId;
-            if(!userId) {
-                return  res.send({status:false, message:"Kindly share the user id for getting the data"});
-            }
-            DB.user.find({_id: userId}, 'Master master Admin admin superAdmin superadmin').then(result =>{
+            DB.user.find({}, 'Master master Admin admin superAdmin superadmin').then(result =>{
                 return res.status(200).json({ status: 'Success', "data":result});
             });
         } catch (err) {
@@ -1925,6 +1960,7 @@ exports.adminUserPL = async (req,res) =>{
             if(!master || !eventId){
                 return  res.send({status:false, message:"Kindly check the data"});
             }
+
             let user = await DB.user.find({$or:[{'admin':master}, {'master': master}, {'superadmin': master}]}, '_id').then (result=> {
                 return result;
             });
@@ -1942,3 +1978,48 @@ exports.adminUserPL = async (req,res) =>{
         }
 
     }
+    // Is suspend the fancy odds && is ball running fancy
+    exports.suspendOrIsBallRunningFancyOdds = (req,res) =>{
+        let marketId = req.body.marketId;
+        let type = req.body.type;
+        
+        if(!marketId || !type){
+            return  res.send({status:false, message:"Kindly check the data"});
+        }
+        DB.FancyOdds.find({marketId: marketId}).then((result)=>{
+            result = result[0];
+            if(type == 'suspend'){
+                if(result.isBallRunning == true){
+                    return  res.send({status:false, message:"Kindly disable the ball running"});
+                }
+                if (result.isSuspended == true) {
+
+                    result.isSuspended = false
+                    
+                }
+                else{
+                    result.isSuspended = true;
+                }
+            } else if( type == 'runningBall') {
+                if(result.isSuspended == true){
+                    return  res.send({status:false, message:"Kindly disable the Suspend status"});
+                }
+                if (result.isBallRunning == true) {
+                    result.isBallRunning = false
+                }
+                else{
+                    result.isBallRunning = true;
+                }
+            }
+            
+            DB.FancyOdds.updateOne({marketId: marketId}, { $set : result}).then((saved)=>{
+                if(saved){
+                    return res.send({data: result})
+    
+                }
+           })
+    
+        })
+    }
+    
+    
