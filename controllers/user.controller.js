@@ -1910,6 +1910,21 @@ exports.adminUserPL = async (req,res) =>{
                     as: "userInfo"
                   }
                 }, {
+                    $lookup: {
+                        from: "users", 
+                        localField: "userInfo.master",
+                        foreignField: "userName",
+                        as: "userInfos"
+                    }
+                }, {
+                    $addFields: 
+                    {
+                        "userInfo.SuperAdmin":"$userInfos.admin",
+                        "userInfo.admin":"$userInfo.master"
+                    }
+                    }
+                
+                , {
                     $project: {
                         "__v": 0,
                         "userInfo._id": 0,
@@ -1934,6 +1949,12 @@ exports.adminUserPL = async (req,res) =>{
                         "userInfo.Name":0,
                         "userInfo.password":0,
                         "userInfo.passwordString":0,
+                        "userInfo.Master": 0,
+                        "userInfo.Admin":0,
+                        "userInfo.superAdmin": 0,
+                        "userInfo.master":0,
+                        "userInfos":0
+                                   
                     }
                 }
               ]).then(results => {
