@@ -1919,7 +1919,7 @@ exports.adminUserPL = async (req,res) =>{
                 }, {
                     $addFields: 
                     {
-                        "userInfo.SuperAdmin":"$userInfos.admin",
+                        "userInfo.superAdmin":"$userInfos.admin",
                         "userInfo.admin":"$userInfo.master"
                     }
                     }
