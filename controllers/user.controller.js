@@ -1990,7 +1990,7 @@ exports.adminUserPL = async (req,res) =>{
             result = result[0];
             if(type == 'suspend'){
                 if(result.isBallRunning == true){
-                    return  res.send({status:false, message:"Kindly disable the ball running"});
+                    return  res.send({status:false, message:"Sorry! Bull is running"});
                 }
                 if (result.isSuspended == true) {
 
@@ -2002,7 +2002,7 @@ exports.adminUserPL = async (req,res) =>{
                 }
             } else if( type == 'runningBall') {
                 if(result.isSuspended == true){
-                    return  res.send({status:false, message:"Kindly disable the Suspend status"});
+                    return  res.send({status:false, message:"Sorry! It is suspended"});
                 }
                 if (result.isBallRunning == true) {
                     result.isBallRunning = false
