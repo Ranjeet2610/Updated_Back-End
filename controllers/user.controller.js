@@ -1981,7 +1981,7 @@ exports.adminUserPL = async (req,res) =>{
                 return  res.send({status:false, message:"Kindly check the data"});
             }
 
-            let user = await DB.user.find({$or:[{'admin':master}, {'master': master}, {'superadmin': master}]}, '_id').then (result=> {
+            let user = await DB.user.find({'master': master}, '_id').then (result=> {
                 return result;
             });
 
@@ -1999,7 +1999,7 @@ exports.adminUserPL = async (req,res) =>{
 
     }
     // Is suspend the fancy odds && is ball running fancy
-    exports.suspendOrIsBallRunningFancyOdds = (req,res) =>{
+    exports.suspendOrIsBallRunningFancyOdds = (req, res) =>{
         let marketId = req.body.marketId;
         let type = req.body.type;
         
@@ -2040,6 +2040,48 @@ exports.adminUserPL = async (req,res) =>{
            })
     
         })
+    }
+
+    exports.allsuspendAndIsballrunning = (req, res) => {
+        let eventId = req.query.event_id;
+        let type = req.body.type;
+        if(!eventId || !type) {
+            return  res.send({status: false, message: "Kindly check the body parameters"});
+        }
+        DB.FancyOdds.find({eventId: eventId}).then((result)=>{
+            result = result[0];
+            if(type == 'suspend'){
+                if(result.isBallRunning == true){
+                    return  res.send({status:false, message:"Sorry! Bull is running"});
+                }
+                if (result.isSuspended == true) {
+
+                    result.isSuspended = false
+                    
+                }
+                else{
+                    result.isSuspended = true;
+                }
+            } else if( type == 'runningBall') {
+                if(result.isSuspended == true){
+                    return  res.send({status:false, message:"Sorry! It is suspended"});
+                }
+                if (result.isBallRunning == true) {
+                    result.isBallRunning = false
+                }
+                else{
+                    result.isBallRunning = true;
+                }
+            }
+            
+            DB.FancyOdds.updateOne({marketId: marketId}, { $set : result}).then((saved)=>{
+                if(saved){
+                    return res.send({data: result})
+    
+                }
+           })
+    
+        });
     }
     
     
