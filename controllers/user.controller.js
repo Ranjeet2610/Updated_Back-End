@@ -2010,18 +2010,7 @@ exports.adminUserPL = async (req,res) =>{
             ]).then(result => {
                 return res.status(200).json({ status: 'Success', "data":result});
             })
-            // let user = await DB.user.find({'master': master}, '_id').then (result=> {
-            //     return result;
-            // });
-
-            // DB.betting.find({
-            //     $and: [
-            //         {'userid': {$in: user.map(e => e._id)}},
-            //         {'eventID': eventId}
-            //     ]
-            // }).then(result => {
-            //     return res.status(200).json({ status: 'Success', "data":result});
-            // })
+           
         } catch (error) {
             return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
         }
