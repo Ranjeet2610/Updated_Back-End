@@ -1980,19 +1980,48 @@ exports.adminUserPL = async (req,res) =>{
             if(!master || !eventId){
                 return  res.send({status:false, message:"Kindly check the data"});
             }
-
-            let user = await DB.user.find({'master': master}, '_id').then (result=> {
-                return result;
-            });
-
-            DB.betting.find({
-                $and: [
-                    {'userid': {$in: user.map(e => e._id)}},
-                    {'eventID': eventId}
-                ]
-            }).then(result => {
+            DB.user.aggregate([
+                {
+                    $match: {"master": master}
+                },
+                {
+                    $lookup: {
+                        from: 'bettings',
+                        localField: "_id",
+                        foreignField: "userid",
+                        as: "bettingData"
+                    }
+                },
+                {
+                    $project: {
+                        userName:1,
+                        Name:1,
+                        bettingData: {
+                            $filter: {
+                                input: '$bettingData',
+                                as: "dt",
+                                cond: {
+                                    $eq:["$$dt.eventID", parseInt(eventId)]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]).then(result => {
                 return res.status(200).json({ status: 'Success', "data":result});
             })
+            // let user = await DB.user.find({'master': master}, '_id').then (result=> {
+            //     return result;
+            // });
+
+            // DB.betting.find({
+            //     $and: [
+            //         {'userid': {$in: user.map(e => e._id)}},
+            //         {'eventID': eventId}
+            //     ]
+            // }).then(result => {
+            //     return res.status(200).json({ status: 'Success', "data":result});
+            // })
         } catch (error) {
             return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
         }
@@ -2043,44 +2072,23 @@ exports.adminUserPL = async (req,res) =>{
     }
 
     exports.allsuspendAndIsballrunning = (req, res) => {
-        let eventId = req.query.event_id;
+        let eventId = req.body.eventId;
         let type = req.body.type;
+        let value = req.body.value;
         if(!eventId || !type) {
-            return  res.send({status: false, message: "Kindly check the body parameters"});
+            return  res.status(400).json({status: false, message: "Kindly check the body parameters"});
         }
-        DB.FancyOdds.find({eventId: eventId}).then((result)=>{
-            result = result[0];
-            if(type == 'suspend'){
-                if(result.isBallRunning == true){
-                    return  res.send({status:false, message:"Sorry! Bull is running"});
-                }
-                if (result.isSuspended == true) {
-
-                    result.isSuspended = false
-                    
-                }
-                else{
-                    result.isSuspended = true;
-                }
-            } else if( type == 'runningBall') {
-                if(result.isSuspended == true){
-                    return  res.send({status:false, message:"Sorry! It is suspended"});
-                }
-                if (result.isBallRunning == true) {
-                    result.isBallRunning = false
-                }
-                else{
-                    result.isBallRunning = true;
-                }
-            }
-            
-            DB.FancyOdds.updateOne({marketId: marketId}, { $set : result}).then((saved)=>{
-                if(saved){
-                    return res.send({data: result})
-    
-                }
-           })
-    
+        let filter = '';
+        let updates = '';
+        if(type == 'suspend'){
+            filter = {eventId: eventId, isBallRunning: false};
+            updates = { $set: { "isSuspended" : value } };
+        } else if( type == 'runningBall') {
+            filter = {eventId: eventId, isSuspended: false};
+            updates = { $set: { "isBallRunning" : value } };
+        }
+        DB.FancyOdds.updateMany(filter,updates).then((result)=>{   
+            return res.status(200).json({status: true, message: "Data has been updated successfully"});
         });
     }
     
