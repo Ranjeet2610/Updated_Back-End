@@ -1951,7 +1951,6 @@ exports.adminUserPL = async (req,res) =>{
                         "userInfo.passwordString":0,
                         "userInfo.Master": 0,
                         "userInfo.Admin":0,
-                        "userInfo.superAdmin": 0,
                         "userInfo.master":0,
                         "userInfos":0
                                    
