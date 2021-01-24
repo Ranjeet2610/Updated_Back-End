@@ -327,17 +327,39 @@ module.exports.getMyprofile = async (userName) => {
     //     });
     //     }
 
-    module.exports.calculateExposure = (bets, team1, team2) => {
-        let loss = 0;
-        let profit = 0;
+    module.exports.calculateExposure = (bets, team1, team2, draw) => {
+        let loss = null;
+        let profit = null;
         if(bets.length > 0){
             bets.map(bet => {
-                if((bet.bettype === 'Back' && bet.selection === team1) || (bet.bettype === 'Lay' && bet.selection === team2)){
-                    console.log('bet:',bet)
-                    profit += parseFloat(bet.profit);
-                    loss += parseFloat(bet.liability);
+                if(draw === 'The Draw'){
+                    if(bet.bettype === 'Back' && bet.selection === draw){
+                        profit += parseFloat(bet.profit);
+                        loss += parseFloat(bet.liability);
+                    }
+                }else{
+                    if((bet.bettype === 'Back' && bet.selection === team1) || (bet.bettype === 'Lay' && bet.selection === team2)
+                        ||(bet.bettype === 'Lay' && bet.selection === 'The Draw')){
+                        profit += parseFloat(bet.profit);
+                        loss += parseFloat(bet.liability);
+                    }
                 }
             });
         }
         return {loss,profit};
+    }
+
+    module.exports.findTheGreatest = (exposures) => {
+        if(exposures.length > 0){
+            for(let i=0;i<exposures.length;i++){
+                for(let j=i+1;j<exposures.length;j++){
+                    if(exposures[i] < exposures[j]){
+                        let swapper = exposures[i];
+                        exposures[i] = exposures[j];
+                        exposures[j] = swapper;
+                    }
+                }
+            }
+        }
+        return exposures[0];
     }
