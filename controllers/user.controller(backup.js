@@ -1,6 +1,5 @@
 var Request = require("request");
 var _ = require('lodash');
-const rps = require('request-promise');
 
 
 const Utils = require('../utils/utils.user');
@@ -389,9 +388,9 @@ exports.openUser = (req,res)=>{
 
 exports.getLiveSports = async (req,res) => {
 
-    Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEventTypes",
+    Request.post({
+        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+        "url": "https://api.betfair.com/exchange/betting/rest/v1.0/listEventTypes/",
         "body": JSON.stringify({
             
                 "filter" : {}
@@ -456,17 +455,32 @@ exports.getLiveCompetitions = async (req,res) => {
 //get list events with time for a specific sport
 
 exports.getLiveEvents = async (req,res) => {
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 5)
+    
     let EventTypeid= req.body.EventTypeid
     let competitionIds= req.body.competitionIds  
-    
     if (competitionIds){
-        Request.get({
-            "headers": { "content-type": "application/json" },
-            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
-            "qs": {"EventTypeID": EventTypeid, "CompetitionID": competitionIds}
+
+
+        Request.post({
+            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+            "url": properties.BetFairAPIURL,
+            "body": JSON.stringify(
+                
+                {
+                    "params": {
+                       "filter": {
+                        //   "eventTypeIds": [EventTypeid],
+                        //   "eventIds": [eventIds],
+                        "competitionIds": [competitionIds]
+                       }
+                    },
+                    "jsonrpc": "2.0",
+                    "method": "SportsAPING/v1.0/listEvents",
+                    "id": 1
+                 }
+    
+                
+         )
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
@@ -475,11 +489,40 @@ exports.getLiveEvents = async (req,res) => {
             const bodyData = JSON.parse(body)
             return res.send({status:true, message:"live sports events", data:bodyData})
         });
+        
     }
+ 
     else
     {
-        let data = await getEventID(EventTypeid);
-         return res.send({status:true, message:"live sports events", data:JSON.parse(data)});
+
+    Request.post({
+        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+        "url": properties.BetFairAPIURL,
+        "body": JSON.stringify(
+            
+            {
+                "params": {
+                   "filter": {
+                      "eventTypeIds": [EventTypeid]
+                   }
+                },
+                "jsonrpc": "2.0",
+                "method": "SportsAPING/v1.0/listEvents",
+                "id": 1
+             }
+
+            
+     )
+    }, (error, response, body) => {
+        if(error) {
+            return console.log(error);
+        }
+        // console.log(body)
+        const bodyData = JSON.parse(body)
+        return res.send({status:true, message:"live sports events", data:bodyData})
+    });
+    
+
     }
 
 }
@@ -487,11 +530,13 @@ exports.getLiveEvents = async (req,res) => {
 //list market type and market odds
 
 exports.listEventsDataById = async (req,res) =>{
+
     let eventIds= req.body.EventId
     Request.post({
         "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
         "url": properties.BetFairAPIURL,
-        "body": JSON.stringify( 
+        "body": JSON.stringify(
+            
             [
                 {
                     "jsonrpc": "2.0",
@@ -514,7 +559,8 @@ exports.listEventsDataById = async (req,res) =>{
                     },
                     "id": 1
                 }
-            ] 
+            ]
+            
      )
     }, (error, response, body) => {
         if(error) {
@@ -564,18 +610,31 @@ exports.listMarketOdds = async (req,res) => {
     if (marketIds){
 
 
-    Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
-        "qs": {"market_id": marketIds}
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-         console.log(body)
-        const bodyData = JSON.parse(body)
-        return res.send({status:true, message:"live market odd", data:bodyData})
-    });
+        Request.post({
+            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+            "url": properties.BetFairAPIURL,
+            "body": JSON.stringify(
+                
+                [{
+                    "jsonrpc": "2.0",
+                    "method": "SportsAPING/v1.0/listMarketBook",
+                    "params": {
+                        "marketIds": [marketIds],
+                        "priceProjection": {
+                            "priceData": ["EX_BEST_OFFERS", "EX_TRADED"],
+                            "virtualise": "true"
+                        }
+                    },
+                    "id": 1
+                }]
+         )
+        }, (error, response, body) => {
+            if(error) {
+                return console.log(error);
+            }
+            const bodyData = JSON.parse(body)
+            return res.send({status:true, message:"live market odds", data:bodyData})
+        });
         
     
         
@@ -646,22 +705,39 @@ exports.storeLiveEvents = async (req,res) => {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
   
-    Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
-        "qs": {"EventTypeID": 4}
+    Request.post({
+        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+        "url": properties.BetFairAPIURL, 
+        "body": JSON.stringify(
+            
+            {
+                "params": {
+                   "filter": {
+                      "eventTypeIds": ["4"],
+
+                    
+                   },
+                   
+                },
+                "jsonrpc": "2.0",
+                "method": "SportsAPING/v1.0/listEvents",
+                "id": 1
+             }
+
+            
+     )
     }, (error, response, body) => {
         if(error) {
             return console.log(error);
         }
         let eventsData = JSON.parse(body)
-        console.log(eventsData)
-        eventsData.map((item,index)=>{
+        // console.log(eventsData)
+        eventsData.result.map((item,index)=>{
             // console.log(item.event.id + item.event.name + item.event.openDate)
         var event = new DB.event({
-            eventId:item.competition.id,
-            eventName: item.competition.name,
-            OpenDate:today
+            eventId:item.event.id,
+            eventName: item.event.name,
+            OpenDate:item.event.openDate
 
         })
 
@@ -731,25 +807,45 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
-    await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
-    const fanceydata =[];
-    var datafancy = marketType.map(async(item)=>{
-        let fobject= {};
-        runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
-        fobject.marketData = item
-        fobject.runners =runnersData;
-        return fobject;
-      })
-        Promise.all(datafancy).then(FancyData=>{
-            // console.log(FancyData)
-            res.send({status:1,message:"fancy market type and runners",data:FancyData})
+    
+  
+       await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
+    
+            const fanceydata =[];
+      var datafancy = marketType.map(async(item)=>{
+        
+
+                   let fobject= {};
+             
+                runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
+        
+                    fobject.marketData = item
+                    fobject.runners =runnersData;
+    
+                    return fobject;
+         
+            })
+
+
+            Promise.all(datafancy).then(FancyData=>{
+
+                // console.log(FancyData)
+
+                res.send({status:1,message:"fancy market type and runners",data:FancyData})
+
+            })
+           
+
         })
-    })    
-}
+    
+    
+    }
+
 
 // store marketType
 
 exports.storeMarketType = async (req,res)=>{
+
     await DB.matchOdds.deleteMany().then((done)=>{
         if(done){
             DB.FancyOdds.deleteMany().then((done)=>{
@@ -757,90 +853,167 @@ exports.storeMarketType = async (req,res)=>{
                     DB.matchRunner.deleteMany().then((done)=>{
                         if(done){
                             DB.FancyRunner.deleteMany().then((done)=>{
+                               
+            
                             })
+
+
                         }
+                       
                     })
+
                 }
+               
            })
         }
+       
     })
     
+
+
+
+
     DB.event.find().then((events)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
+        
         events.map((item,index)=>{
+
             let eventIds= item.eventId
-            console.log("event id=>",eventIds)
-            Request.get({
-                "headers": { "content-type": "application/json" },
-                "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
-                "qs": {"EventID": eventIds}
+            Request.post({
+                "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+                "url": properties.BetFairAPIURL,
+                "body": JSON.stringify(
+                    
+                    [
+                        {
+                            "jsonrpc": "2.0",
+                            "method": "SportsAPING/v1.0/listMarketCatalogue",
+                            "params": {
+                                "filter": {
+                                    "eventIds": [eventIds],
+                                    // "marketIds": [marketIds]
+                                    
+                                },
+                                "maxResults": "200",
+                                "marketProjection": [
+                                    // "COMPETITION",
+                                    // "EVENT",
+                                    // "EVENT_TYPE",
+                                    "RUNNER_DESCRIPTION",
+                                    // "RUNNER_METADATA",
+                                    "MARKET_START_TIME"
+                                ]
+                            },
+                            "id": 1
+                        }
+                    ]
+                    
+             )
             }, (error, response, body) => {
                 if(error) {
                     return console.log(error);
                 }
                 var bodyData = JSON.parse(body)
-                console.log(bodyData)
-                var matchOdds =  bodyData.filter((item)=> {
+                                // console.log(bodyData)
+                                // return res.json(bodyData)
+
+               
+
+                var matchOdds =  bodyData[0].result.filter((item)=> {
                     return item.marketName == "Match Odds";
                 })
+                // console.log(matchOdds + "lkjk")
 
-                var fancyOdds =  bodyData.filter((item)=> {
+                var fancyOdds =  bodyData[0].result.filter((item)=> {
+                    // return item.marketName === "Over";
                     return item.marketName != "Match Odds";
-                });
+                    // return item.marketName.includes("Over");
+                })
+                // console.log(fancyOdds)
+                // return res.json(fancyOdds)
+
+                // var sortedObjs = _.sortBy(fancyOdds, 'marketId').reverse().slice(0,5);
+                // console.log(fancyOdds)
 
                 matchOdds.map((item,index)=>{
+
+                    
                     var matchOdds = new DB.matchOdds({
                         eventId: eventIds,
                         marketId:item.marketId,
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
+            
                     })
                    matchOdds.save()
 
                    item.runners.map((item1,index)=>{
-                    var matchRunner = new DB.matchRunner({
+            
+                  var matchRunner = new DB.matchRunner({
                         marketId:item.marketId,
                         selectionId: item1.selectionId,
                         runnerName:item1.runnerName
+            
                     })
+
                     matchRunner.save()
+
                    })
+                   
+                   
+
                 })
 
+
                 fancyOdds.map((item,index)=>{
+
                     var FancyOdds = new DB.FancyOdds({
                         eventId: eventIds,
                         marketId:item.marketId,
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
+            
                     })
-                    FancyOdds.save();
+            
+                    FancyOdds.save()
+
                 item.runners.map((item1,index)=>{
+            
                     var FancyRunner = new DB.FancyRunner({
                           marketId:item.marketId,
                           selectionId: item1.selectionId,
                           runnerName:item1.runnerName
+              
                       })
-                      FancyRunner.save();
+  
+                      FancyRunner.save()
+  
                      })
+
                 }) 
             });
         })
-        res.send({status:true, message:"events stored successfully"});
+        res.send({status:true, message:"events stored successfully"})
+
     })
+
 }
 
 
 //get DBliveEvents
 exports.getDbliveEvents = async (req,res)=>{
+
    await DB.event.find().then((events)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
-    res.json(events);
-    })
+
+else
+ res.json(events)
+
+})
 
 }
 
@@ -863,13 +1036,16 @@ exports.changePassword = (req,res)=>{
                         }else{
                             return res.send({status:true, message:"Updated Successfully"})
                         }
-                    });
+                    })
+                
+
             }
         }).catch((error)=>{
             console.log("catch=========",error)
         })
     } catch (error) {
-        console.log("try =========catch=========",error);
+        console.log("try =========catch=========",error)
+
     }
 }
 
@@ -880,10 +1056,12 @@ exports.changePasswordByUser = (req,res)=>{
         DB.user.findOne({userName:req.body.userName}).then((changeuser)=>{
             if(!changeuser){
                 return res.send({status:false, message:"User Not Found"})
+
             }
            var oldpassword = req.body.oldPassword
            var result = compareSync(oldpassword,changeuser.password);
             if(result){
+
                 var salt = genSaltSync(10);
                 var hash2= hashSync(req.body.newPassword, salt);
                 changeuser.password  = hash2
@@ -895,7 +1073,11 @@ exports.changePasswordByUser = (req,res)=>{
                             return res.send({status:true, message:"Updated Successfully"})
                         }
                     })
+                
             }
+
+
+
         }).catch((error)=>{
             console.log("catch=========",error)
         })
@@ -907,6 +1089,7 @@ exports.changePasswordByUser = (req,res)=>{
 
 
 exports.lockMatchOdds = (req,res) =>{
+
     DB.matchOdds.findOne({marketId:req.body.marketId}).then((updatedMatchOdds)=>{
         if (updatedMatchOdds.isEnabled == true) {
             updatedMatchOdds.isEnabled = false
@@ -914,9 +1097,11 @@ exports.lockMatchOdds = (req,res) =>{
         else{
             updatedMatchOdds.isEnabled = true
         }
+
         updatedMatchOdds.save().then((saved)=>{
             if(saved){
                 return res.send({Data:updatedMatchOdds})
+
             }
        })
 
@@ -1897,68 +2082,3 @@ exports.adminUserPL = async (req,res) =>{
     }
     
     
-
-    async function getEventID(EventTypeID) {
-        let compsData = await getCompitions(EventTypeID);
-        let eventID = [];
-        for(let i=0;i<compsData.length;i++){
-        let compID = compsData[i].competition.id;
-        let dts =await dataSet(EventTypeID, compID);
-        eventID.push(...dts);
-        if(i == compsData.length-1){
-        return eventID;
-        }
-
-        }
-   }
-
-    async function getCompitions(EventTypeID){
-            let options = {
-                        "headers": { "content-type": "application/json" },
-                        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
-                        "qs": {"EventTypeID": EventTypeID},
-                        json: true
-
-            };
-             return rps(options).then(body => {
-               return body;
-        });
-
-    }
-async function dataSet(EventTypeID, compID){
-    let options = {"headers": { "content-type": "application/json" },
-    "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
-    "qs": {"EventTypeID": EventTypeID, "CompetitionID": compID},
-    json:true
-}
-    return rps(options).then(body => {
-        return body;
-
-}).catch(function (err) {
-   return err;
-});
-}
-
-// async function listMarketTypes(eventTypeID){
-//     let eventData = await getEventID(eventTypeID);
-//     let data = [];
-//     eventData.map(e=> {
-//         let EventID = e.EventID;
-//         Request.get({
-//             "headers": { "content-type": "application/json" },
-//             "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes ",
-//             "qs": {"EventID": EventID}
-            
-//         }, (error, response, body) => {
-//             if(error) {
-//                 return console.log(error);
-//             }
-//             // console.log(body)
-//             const bodyData = JSON.parse(body)
-//             //console.log(bodyData);
-//             data.push(bodyData);
-//         });
-//     });
-//     return data;
-// }
-   

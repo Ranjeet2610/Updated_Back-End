@@ -9,7 +9,7 @@ module.exports = {
         FOUR: 'mm-dd-yyyy hh:mm:ss',
     },
     TIME_FRAME_TRENDING_QUERIES: 5,
-    BetFairToken:'jiQf37pUTtsI78G7lOBEgMJQYEsN6SYbuiy8cOcF9PQ=',
+    BetFairToken:'BAhWzTvQeZSaZmc08Of9ErphHdHYaY1huI6rZkZrb4U=',
     APPKey:'ZkwpavU6no0r74Tk',
     BetFairAPIURL:'https://api.betfair.com/exchange/betting/json-rpc/v1',
     rapid_api_cricket_url: 'https://dev132-cricket-live-scores-v1.p.rapidapi.com/scorecards.php',
