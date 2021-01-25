@@ -1619,25 +1619,18 @@ exports.adminUserPL = async (req,res) =>{
 
     //code added by shreesh
     exports.getLiveCricketScore = async (req, res) => {
-        var options = {
-            method: 'GET',
-            url: properties.rapid_api_cricket_url,
-            qs: { seriesid: properties.seriesid, matchid: properties.matchid },
-            headers: {
-                'x-rapidapi-host': properties.rapidapi_host,
-                'x-rapidapi-key': properties.rapidapi_key,
-                useQueryString: properties.useQueryString
-            }
-        };
-
-        Request(options, function (error, response, body) {
-            if (error) {
+        let eventId = req.body.eventId;
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/score",
+            "qs": {"match_id": eventId}
+        }, (error, response, body) => {
+            if(error) {
                 return res.status(500).json({ success: false, error: error }).end('');
-            } else {
-                return res.status(200).json({ status: 'Success', message: 'Live Cricket Score', "data": JSON.parse(body) });
             }
-
-
+            // console.log(body)
+            
+            return res.status(200).json({ status: 'Success', message: 'Live Cricket Score', "data": JSON.parse(body) });
         });
     }
 
