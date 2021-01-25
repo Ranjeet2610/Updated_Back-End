@@ -176,6 +176,10 @@ var matchOddSchema = new mongoose.Schema({
 var FancyOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
   marketId:{type:Number,default:0},
+  LayPrice:{type:Number, default:0},
+  LaySize:{type:Number, default:0},
+  BackPrice:{type:Number, default:0},
+  BackSize:{type:Number, default:0},
   isEnabled:{type:Boolean,default:true},
   isVisible:{type:Boolean,default:false},
   isSuspended:{type:Boolean, default: false},

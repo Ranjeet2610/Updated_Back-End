@@ -460,7 +460,7 @@ exports.getLiveEvents = async (req,res) => {
     else
     {
         let data = await getEventID(EventTypeid);
-         return res.send({status:true, message:"live sports events", data:JSON.parse(data)});
+         return res.send({status:true, message:"live sports events", data:data});
     }
 
 }
@@ -508,7 +508,7 @@ exports.listMarketOdds = async (req,res) => {
             if(error) {
                 return console.log(error);
             }
-            // console.log(body)
+            //console.log(body)
             const bodyData = JSON.parse(body)
             return res.send({status:true, message:"live market odd", data:bodyData})
         });
@@ -546,13 +546,11 @@ exports.storeLiveEvents = async (req,res) => {
     tomorrow.setDate(tomorrow.getDate() + 5)
   
     let data = await getEventID(EventTypeid);
-    let eventsData = JSON.parse(data)
-    console.log(eventsData)
-    eventsData.map((item,index)=>{
+    data.map((item,index)=>{
         // console.log(item.event.id + item.event.name + item.event.openDate)
     var event = new DB.event({
-        eventId:item.competition.id,
-        eventName: item.competition.name,
+        eventId:item.event.id,
+        eventName: item.event.name,
         OpenDate:item.event.openDate
 
     })
@@ -617,20 +615,41 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
+   let eventId = req.body.eventId;
+        let options = {
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookSession",
+            "qs": {"match_id": eventId},
+            json: true
+        }
+   Request(options, function (error, response, body) {
+       if (error) {
+           return res.status(500).json({ success: false, error: error }).end('');
+       } else {
+           let bodyData = JSON.parse(body);
+           bodyData.map(e => {
+               let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1}};
+               let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
+            DB.FancyOdds.updateMany(filter, query).then((result)=>{   
+                console.log("successfully updated")
+            });
+           })
+       }
+   });
+       
     await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
-    const fanceydata =[];
     var datafancy = marketType.map(async(item)=>{
         let fobject= {};
         runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
         fobject.marketData = item
         fobject.runners =runnersData;
         return fobject;
+        
+      });
+      Promise.all(datafancy).then(FancyData=>{
+        res.send({status:1, message:"fancy market type and runners",data:FancyData})
       })
-      console.log(datafancy)
-        Promise.all(datafancy).then(FancyData=>{
-            // console.log(FancyData)
-            res.send({status:1,message:"fancy market type and runners",data:FancyData})
-        })
+      
     })    
 }
 
@@ -672,7 +691,14 @@ exports.storeMarketType = async (req,res)=>{
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
                     })
-                   matchOdds.save()
+                   matchOdds.save(function(err,result){ 
+                    if (err){ 
+                        console.log(err); 
+                    } 
+                    else{ 
+                        console.log(result) 
+                    } 
+                }) 
 
                    item.runners.map((item1,index)=>{
                     var matchRunner = new DB.matchRunner({
@@ -680,7 +706,14 @@ exports.storeMarketType = async (req,res)=>{
                         selectionId: item1.selectionId,
                         runnerName:item1.runnerName
                     })
-                    matchRunner.save()
+                    matchRunner.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
                    })
                 })
 
@@ -701,15 +734,33 @@ exports.storeMarketType = async (req,res)=>{
                 var FancyOdds = new DB.FancyOdds({
                     eventId: eventIds,
                     marketId:item.SelectionId,
-                    marketName: item.RunnerName
+                    marketName: item.RunnerName,
+                    LayPrice: item.LayPrice1,
+                    LaySize: item.LaySize1,
+                    BackPrice: item.BackPrice1,
+                    BackSize: item.BackSize1
                 })
-                FancyOdds.save();
+                FancyOdds.save(function(err,result){ 
+                    if (err){ 
+                        console.log(err); 
+                    } 
+                    else{ 
+                        console.log(result) 
+                    } 
+                }) 
                 var FancyRunner = new DB.FancyRunner({
                       marketId:item.SelectionId,
-                      selectionId: item1.SelectionId,
-                      runnerName:item1.RunnerName
+                      selectionId: item.SelectionId,
+                      runnerName:item.RunnerName
                   })
-                  FancyRunner.save();
+                  FancyRunner.save(function(err,result){ 
+                    if (err){ 
+                        console.log(err); 
+                    } 
+                    else{ 
+                        console.log(result) 
+                    } 
+                }) 
                 
             })
         })
