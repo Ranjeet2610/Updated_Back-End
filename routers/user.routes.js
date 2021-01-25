@@ -137,4 +137,12 @@ module.exports = function(router) {
 
     router.patch('/adminWalletBalance',Token.checkToken, Auth.updateAdminWalletbalance);
 
+    // Code by harry
+    router.get('/getAllBetting', Token.checkToken, Auth.getAllBetting);
+    router.get('/getAllMasterandSupermaster', Token.checkToken, Auth.getAllMasterandSupermaster);
+    router.get('/getBettingBasedOnMaster', Token.checkToken, Auth.getBettingBasedOnMaster);
+    router.patch('/suspendOrIsBallRunningFancyOdds', Token.checkToken, Auth.suspendOrIsBallRunningFancyOdds);
+    router.put('/allsuspendAndIsballrunning', Token.checkToken, Auth.allsuspendAndIsballrunning);
+    
+
     }

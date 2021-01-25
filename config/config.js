@@ -9,13 +9,13 @@ module.exports = {
         FOUR: 'mm-dd-yyyy hh:mm:ss',
     },
     TIME_FRAME_TRENDING_QUERIES: 5,
-    BetFairToken:'BF2n7yqk8XVVzPL5xPzXf3Uh7lhbAmwmivVnIMtpl90=',
+    BetFairToken:'BAhWzTvQeZSaZmc08Of9ErphHdHYaY1huI6rZkZrb4U=',
     APPKey:'ZkwpavU6no0r74Tk',
     BetFairAPIURL:'https://api.betfair.com/exchange/betting/json-rpc/v1',
     rapid_api_cricket_url: 'https://dev132-cricket-live-scores-v1.p.rapidapi.com/scorecards.php',
     seriesid: '2141',
     matchid: '43431',
-    rapidapi_host: 'dev132-cricket-live-scores-v1.p.rapidapi.com',
+    rapidapi_host: 'dev132-cricket-live-scores-v1.p.rapidapi.com',  
     rapidapi_key: 'ce5898839amsh6f28f4d4bd4885fp1ef301jsnbf48915aa537',
     useQueryString: true
 }
