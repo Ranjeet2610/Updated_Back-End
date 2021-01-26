@@ -732,40 +732,43 @@ exports.storeMarketType = async (req,res)=>{
             json: true
         }
         rps(option1).then(body => {
-            body.map((item,index)=>{
-                var FancyOdds = new DB.FancyOdds({
-                    eventId: eventIds,
-                    marketId:item.SelectionId,
-                    marketName: item.RunnerName,
-                    LayPrice: item.LayPrice1,
-                    LaySize: item.LaySize1,
-                    BackPrice: item.BackPrice1,
-                    BackSize: item.BackSize1
+            if(body.message == undefined){
+                body.map((item,index)=>{
+                    var FancyOdds = new DB.FancyOdds({
+                        eventId: eventIds,
+                        marketId:item.SelectionId,
+                        marketName: item.RunnerName,
+                        LayPrice: item.LayPrice1,
+                        LaySize: item.LaySize1,
+                        BackPrice: item.BackPrice1,
+                        BackSize: item.BackSize1
+                    })
+                    FancyOdds.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
+                    var FancyRunner = new DB.FancyRunner({
+                          marketId:item.SelectionId,
+                          selectionId: item.SelectionId,
+                          runnerName:item.RunnerName
+                      })
+                      FancyRunner.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
+
                 })
-                FancyOdds.save(function(err,result){ 
-                    if (err){ 
-                        console.log(err); 
-                    } 
-                    else{ 
-                        console.log(result) 
-                    } 
-                }) 
-                var FancyRunner = new DB.FancyRunner({
-                      marketId:item.SelectionId,
-                      selectionId: item.SelectionId,
-                      runnerName:item.RunnerName
-                  })
-                  FancyRunner.save(function(err,result){ 
-                    if (err){ 
-                        console.log(err); 
-                    } 
-                    else{ 
-                        console.log(result) 
-                    } 
-                }) 
-                
-            })
+            }
         })
+        
         if(i == events.length-1){
             res.send({status:true, message:"events stored successfully"})
         }
@@ -1778,21 +1781,43 @@ exports.adminUserPL = async (req,res) =>{
         if(!admin || !eventId) {
             return  res.send({status:false, message:"Kindly check the data"});
         }
-       // DB.user.find({})
-        DB.user.aggregate([
-            {$match: {admin: admin}},
-            {
-                $lookup: {
-                    from: 'user',
-                    localField: "master",
-                    foreignField: "admin",
-                    as: "userData"
+        DB.user.find({admin:admin}).select('userName -_id').then(data =>{
+            let d = [];
+            data.map(e => d.push(e.userName));
+            DB.user.aggregate([
+                {
+                    $match: {"master":{$in:d}}
+                },
+                {
+                    $lookup: {
+                        from: 'bettings',
+                        localField: "_id",
+                        foreignField: "userid",
+                        as: "bettingData"
+                    }
+                },
+                {
+                    $project: {
+                        userName:1,
+                        Name:1,
+                        master:1,
+                        bettingData: {
+                            $filter: {
+                                input: '$bettingData',
+                                as: "dt",
+                                cond: {
+                                    $eq:["$$dt.eventID", parseInt(eventId)]
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            ]).then(result => {
+                return res.status(200).json({ status: 'Success', "data":result});
+            })
 
-        ]).then(result => {
-            return res.status(200).json({ status: 'Success', "data":result});
         })
+        
 
     }
 
