@@ -15,6 +15,7 @@
     "nodemon": "^2.0.4",
     "rand-token": "^1.0.1",
     "request": "^2.88.2",
+    "request-promise": "^4.2.6",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {},
