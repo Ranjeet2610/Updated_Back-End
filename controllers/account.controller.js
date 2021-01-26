@@ -620,7 +620,7 @@ exports.placeBet = (req, res) => {
                                 }
                             }
                             // console.log('2:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
-                            user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack);
+                            user.walletBalance = parseFloat(user.freeChips) - parseFloat(user.exposure);
                             user.save().then((updatedUser) => {
                                 return res.send({ status: true, message: "Bet place successfully", data: updatedUser, bettingData: saved });
                             });
