@@ -87,7 +87,6 @@ cron.schedule(" 30 * * * *", function() {
 });
 
 cron.schedule(" 10 * * * *", function() {
-
   Request.get({
     "headers": {"content-type": "application/json" },
     "url": "http://65.1.37.38:4000/api/BetSettleFancyOdds",
@@ -101,6 +100,18 @@ cron.schedule(" 10 * * * *", function() {
  
 });
 
+cron.schedule("*/3 * * * * *", function() {
+  Request.post({
+    "headers": {"content-type": "application/json" },
+    "url": "http://65.1.37.38:4000/api/storeMarketType",
+}, (error,response,body) => {
+    if(error) {
+        return console.log(error);
+    }
+      console.log("Import data again");
+  
+})
+})
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
     console.log(`Server is running on ${properties.PORT} port.`);
