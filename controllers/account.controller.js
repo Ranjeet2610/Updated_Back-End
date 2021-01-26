@@ -598,22 +598,6 @@ exports.placeBet = (req, res) => {
                         profit: req.body.profit,
                         liability: req.body.loss
                     })
-<<<<<<< HEAD
-                    console.log(betting)
-                    betting.save().then((saved) => {
-                        if (!saved) {
-                            return res.send({ status: false, message: "Technical Error" })
-                        }
-                        DB.betting.find({ clientName: req.body.userName, eventID: req.body.eventID }).then((bets) => {
-                            let exp1 = Utils.calculateExposure(bets, team1, team2);
-                            let exp2 = Utils.calculateExposure(bets, team2, team1);
-                            if (exp1.loss - exp2.profit >= exp2.loss - exp1.profit) {
-                                user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss - exp2.profit);
-                            } else {
-                                user.exposure = parseFloat(user.exposure) + parseFloat(exp2.loss - exp1.profit);
-                            }
-                            console.log('2:exp1:', exp1.loss - exp2.profit, ' exp2:', exp2.loss - exp1.profit, ' user.exposure:', user.exposure);
-=======
                     // console.log(betting)
                     betting.save().then((saved)=>{
                         if(!saved){
@@ -636,7 +620,6 @@ exports.placeBet = (req, res) => {
                                 }
                             }
                             // console.log('2:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
->>>>>>> 1cabca84751637cd87d5ef2e9e604ce491e67efb
                             user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack);
                             user.save().then((updatedUser) => {
                                 return res.send({ status: true, message: "Bet place successfully", data: updatedUser, bettingData: saved });
