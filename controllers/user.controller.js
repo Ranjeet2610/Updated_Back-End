@@ -545,7 +545,7 @@ exports.storeLiveEvents = async (req,res) => {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
   
-    let data = await getEventID(EventTypeid);
+    let data = await getEventID(4);
     data.map((item,index)=>{
         // console.log(item.event.id + item.event.name + item.event.openDate)
     var event = new DB.event({
@@ -626,14 +626,16 @@ exports.fancyMarketTypeData= async (req,res) =>{
        if (error) {
            return res.status(500).json({ success: false, error: error }).end('');
        } else {
-           let bodyData = JSON.parse(body);
-           bodyData.map(e => {
+        if(body.message == undefined){
+           //let bodyData = JSON.parse(body);
+           body.map(e => {
                let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1}};
                let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
             DB.FancyOdds.updateMany(filter, query).then((result)=>{   
                 console.log("successfully updated")
             });
            })
+        }
        }
    });
        
@@ -1769,6 +1771,33 @@ exports.adminUserPL = async (req,res) =>{
         }
 
     }
+
+    exports.getBettingBasedOnSuperMaster = (req, res) => {
+        let admin = req.query.superMaster;
+        let eventId = req.query.event_id;
+        if(!admin || !eventId) {
+            return  res.send({status:false, message:"Kindly check the data"});
+        }
+       // DB.user.find({})
+        DB.user.aggregate([
+            {$match: {admin: admin}},
+            {
+                $lookup: {
+                    from: 'user',
+                    localField: "master",
+                    foreignField: "admin",
+                    as: "userData"
+                }
+            }
+
+        ]).then(result => {
+            return res.status(200).json({ status: 'Success', "data":result});
+        })
+
+    }
+
+
+    
     // Is suspend the fancy odds && is ball running fancy
     exports.suspendOrIsBallRunningFancyOdds = (req, res) =>{
         let marketId = req.body.marketId;

@@ -141,6 +141,7 @@ module.exports = function(router) {
     router.get('/getAllBetting', Token.checkToken, Auth.getAllBetting);
     router.get('/getAllMasterandSupermaster', Token.checkToken, Auth.getAllMasterandSupermaster);
     router.get('/getBettingBasedOnMaster', Token.checkToken, Auth.getBettingBasedOnMaster);
+    router.get('/getBettingBasedOnSuperMaster', Auth.getBettingBasedOnSuperMaster);
     router.patch('/suspendOrIsBallRunningFancyOdds', Token.checkToken, Auth.suspendOrIsBallRunningFancyOdds);
     router.put('/allsuspendAndIsballrunning', Token.checkToken, Auth.allsuspendAndIsballrunning);
     
