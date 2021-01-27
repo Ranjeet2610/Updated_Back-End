@@ -187,6 +187,7 @@ var FancyOddSchema = new mongoose.Schema({
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false},
   active:{type:Boolean,default:true},
+  status: {type: String, default:''}
 
 })
 
