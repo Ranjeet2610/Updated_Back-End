@@ -15,7 +15,7 @@ module.exports = {
     rapid_api_cricket_url: 'https://dev132-cricket-live-scores-v1.p.rapidapi.com/scorecards.php',
     seriesid: '2141',
     matchid: '43431',
-    rapidapi_host: 'dev132-cricket-live-scores-v1.p.rapidapi.com',
+    rapidapi_host: 'dev132-cricket-live-scores-v1.p.rapidapi.com',  
     rapidapi_key: 'ce5898839amsh6f28f4d4bd4885fp1ef301jsnbf48915aa537',
     useQueryString: true
 }
