@@ -48,25 +48,25 @@ console.log('test data in progress');
 app.use('/api',router);
 authRoutes(router); 
 
-cron.schedule(" 02 04 * * *", function() {
+// cron.schedule(" 02 04 * * *", function() {
 
-   Request.get({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": "http://identitysso.betfair.com/api/keepAlive",
-    }, (error,response,body) => {
-        if(error) {
-            return console.log(error);
-        }
-        const bodyData = JSON.parse(body)
-        if(bodyData.status=="SUCCESS"){
-          console.log(bodyData);
+//    Request.get({
+//         "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
+//         "url": "http://identitysso.betfair.com/api/keepAlive",
+//     }, (error,response,body) => {
+//         if(error) {
+//             return console.log(error);
+//         }
+//         const bodyData = JSON.parse(body)
+//         if(bodyData.status=="SUCCESS"){
+//           console.log(bodyData);
 
 
-        }
+//         }
 
-  });
-  console.log("running a task every 3 minute");
-});
+//   });
+//   console.log("running a task every 3 minute");
+// });
 
 // (" 0 08 * * *
 
@@ -100,6 +100,21 @@ cron.schedule(" 10 * * * *", function() {
  
 });
 
+<<<<<<< HEAD
+=======
+cron.schedule("*/5 * * * * *", function() {
+  Request.get({
+    "headers": {"content-type": "application/json" },
+    "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
+}, (error,response,body) => {
+    if(error) {
+        return console.log(error);
+    }
+      console.log("Import data again");
+  
+})
+})
+>>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
     console.log(`Server is running on ${properties.PORT} port.`);

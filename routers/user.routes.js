@@ -144,6 +144,7 @@ module.exports = function(router) {
     router.get('/getBettingBasedOnSuperMaster', Token.checkToken, Auth.getBettingBasedOnSuperMaster);
     router.patch('/suspendOrIsBallRunningFancyOdds', Token.checkToken, Auth.suspendOrIsBallRunningFancyOdds);
     router.put('/allsuspendAndIsballrunning', Token.checkToken, Auth.allsuspendAndIsballrunning);
+    router.get('/storeFancyOddsCron', Auth.storeFancyOddsCron);
     
 
     }
