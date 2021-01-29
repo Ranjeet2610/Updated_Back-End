@@ -100,8 +100,6 @@ cron.schedule(" 10 * * * *", function() {
  
 });
 
-<<<<<<< HEAD
-=======
 cron.schedule("*/5 * * * * *", function() {
   Request.get({
     "headers": {"content-type": "application/json" },
@@ -114,7 +112,6 @@ cron.schedule("*/5 * * * * *", function() {
   
 })
 })
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
     console.log(`Server is running on ${properties.PORT} port.`);
