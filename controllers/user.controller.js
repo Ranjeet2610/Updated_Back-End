@@ -442,22 +442,12 @@ exports.getLiveEvents = async (req,res) => {
     tomorrow.setDate(tomorrow.getDate() + 5)
     let EventTypeid= req.body.EventTypeid
     let competitionIds= req.body.competitionIds  
-<<<<<<< HEAD
-    if (competitionIds){
-
-
-        Request.get({
-            "headers": { "content-type": "application/json" },
-            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
-            "qa": {"EventTypeID": EventTypeid, "CompetitionID": competitionIds}
-=======
     
     if (competitionIds){
         Request.get({
             "headers": { "content-type": "application/json" },
             "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
             "qs": {"EventTypeID": EventTypeid, "CompetitionID": competitionIds}
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
@@ -469,29 +459,8 @@ exports.getLiveEvents = async (req,res) => {
     }
     else
     {
-<<<<<<< HEAD
-
-        Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
-        "qs": {"EventTypeID": EventTypeid}
-        
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-        // console.log(body)
-        const bodyData = JSON.parse(body)
-        bodyData.map(e => e.event = {"openDate":today});
-        //console.log(bodyData);
-        return res.send({status:true, message:"live sports events", data:bodyData})
-    });
-    
-
-=======
         let data = await getEventID(EventTypeid);
          return res.send({status:true, message:"live sports events", data:data});
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
     }
 
 }
@@ -531,25 +500,6 @@ exports.listEventsDataById = async (req,res) =>{
 exports.listMarketOdds = async (req,res) => {
     var marketIds= req.body.marketId
     if (marketIds){
-<<<<<<< HEAD
-
-
-    Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents&EventTypeID=4&CompetitionID=11678489",
-        "qa": {"EventID": marketIds}
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-         console.log(body)
-        const bodyData = JSON.parse(body)
-        return res.send({status:true, message:"live market odd", data:bodyData})
-    });
-        
-    
-        
-=======
         Request.get({
             "headers": { "content-type": "application/json" },
             "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
@@ -562,7 +512,6 @@ exports.listMarketOdds = async (req,res) => {
             const bodyData = JSON.parse(body)
             return res.send({status:true, message:"live market odd", data:bodyData})
         });
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
     }
 }
 
@@ -596,24 +545,6 @@ exports.storeLiveEvents = async (req,res) => {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
   
-<<<<<<< HEAD
-    Request.get({
-        "headers": { "content-type": "application/json" },
-        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
-        "qs": {"EventTypeID": 4}
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-        let eventsData = JSON.parse(body)
-        console.log(eventsData)
-        eventsData.map((item,index)=>{
-            // console.log(item.event.id + item.event.name + item.event.openDate)
-        var event = new DB.event({
-            eventId:item.competition.id,
-            eventName: item.competition.name,
-            OpenDate:today
-=======
     let data = await getEventID(4);
     data.map((item,index)=>{
         // console.log(item.event.id + item.event.name + item.event.openDate)
@@ -621,7 +552,6 @@ exports.storeLiveEvents = async (req,res) => {
         eventId:item.event.id,
         eventName: item.event.name,
         OpenDate:item.event.openDate
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 
     })
 
@@ -685,19 +615,6 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
-<<<<<<< HEAD
-    
-  
-       await DB.FancyOdds.find({eventId:req.body.eventId}).sort( { "marketName": -1 } ).then((marketType)=>{
-    
-            const fanceydata =[];
-      var datafancy = marketType.map(async(item)=>{
-        
-
-                   let fobject= {};
-             
-                runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
-=======
    let eventId = req.body.eventId;
         let options = {
             "headers": { "content-type": "application/json" },
@@ -729,7 +646,6 @@ exports.fancyMarketTypeData= async (req,res) =>{
         fobject.marketData = item
         fobject.runners =runnersData;
         return fobject;
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
         
       });
       Promise.all(datafancy).then(FancyData=>{
@@ -761,49 +677,6 @@ exports.storeMarketType = async (req,res)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
-<<<<<<< HEAD
-        
-        events.map((item,index)=>{
-
-            let eventIds= item.eventId
-            console.log("event id=>",eventIds)
-            //http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes&EventID=27993622 
-            Request.get({
-                "headers": { "content-type": "application/json" },
-                "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
-                "qa": {"EventID": eventIds}
-            }, (error, response, body) => {
-                if(error) {
-                    return console.log(error);
-                }
-                var bodyData = JSON.parse(body)
-                                // console.log(bodyData)
-                                // return res.json(bodyData)
-    //[{"marketId":"1.166397338","marketName":"Match Odds","marketStartTime":"2019-12-19T04:45:00.000Z","totalMatched":35685.4,"runners": [{"selectionId":7461,"runnerName":"Pakistan","handicap":0,"sortPriority":1}, {"selectionId":7337,"runnerName":"Sri Lanka","handicap":0,"sortPriority":2}, {"selectionId":60443,"runnerName":"The Draw","handicap":0,"sortPriority":3}]}, {"marketId":"1.166397339","marketName":"Tied Match","marketStartTime":"2019-12- 19T04:45:00.000Z","totalMatched":0,"runners": [{"selectionId":37302,"runnerName":"Yes","handicap":0,"sortPriority":1}, {"selectionId":37303,"runnerName":"No","handicap":0,"sortPriority":2}]}]
-
-
-               
-                console.log(bodyData)
-                var matchOdds =  bodyData.filter((item)=> {
-                    return item.marketName == "Match Odds";
-                })
-                // console.log(matchOdds + "lkjk")
-
-                var fancyOdds =  bodyData.filter((item)=> {
-                    // return item.marketName === "Over";
-                    return item.marketName != "Match Odds";
-                    // return item.marketName.includes("Over");
-                })
-                // console.log(fancyOdds)
-                // return res.json(fancyOdds)
-
-                // var sortedObjs = _.sortBy(fancyOdds, 'marketId').reverse().slice(0,5);
-                // console.log(fancyOdds)
-
-                matchOdds.map((item,index)=>{
-
-                    
-=======
         for(let i = 0; i<events.length; i++){
             let eventIds= events[i].eventId;
             let options = {
@@ -814,7 +687,6 @@ exports.storeMarketType = async (req,res)=>{
             }
             rps(options).then(body => {
                 body.map((item,index)=>{
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
                     var matchOdds = new DB.matchOdds({
                         eventId: eventIds,
                         marketId:item.marketId,
@@ -979,12 +851,7 @@ exports.storeFancyOddsCron = (req, res) => {
 
 //get DBliveEvents
 exports.getDbliveEvents = async (req,res)=>{
-<<<<<<< HEAD
-
-   await DB.event.find().sort( { "OpenDate": -1 } ).then((events)=>{
-=======
    await DB.event.find().then((events)=>{
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
