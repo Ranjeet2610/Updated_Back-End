@@ -533,8 +533,14 @@ exports.placeBet = (req, res) => {
         let team1 = JSON.parse(req.body.description).name.split(' v ')[0];
         let team2 = JSON.parse(req.body.description).name.split(' v ')[1];
 
+        DB.user.findOne({userName:req.body.userName}).then((user) => {
+            if(user){
+                let ProfitLoss = 0;
+                if (req.body.bettype === 'Back') {
+                    ProfitLoss = req.body.profit;
                 } else {
                     ProfitLoss = req.body.loss;
+                }
                 // console.log(user.exposure);
                 DB.betting.find({clientName:req.body.userName, eventID: req.body.eventID}).then((bets) => {
                     let exp1 = Utils.calculateExposure(bets, team1, team2, '');
@@ -1458,7 +1464,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                             // console.log(oddsData[0].runners[0].selectionId,oddsData[0].runners[0].status)
                             oddsData.map((item1, index) => {
                                 // console.log(item1.selectionId,item1.status)
-                                if (item1.Status === "WINNER") {
+                                if (item1.GameStatus === "WINNER") {
                                    // const winnerSelectionId = item1.SelectionId
                                     //    console.log(item1.selectionId,item1.status,winnerSelectionId )
 
@@ -1558,7 +1564,7 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                 }
 
-                                else if (item1.Status === "LOSER") {
+                                else if (item1.GameStatus === "LOSER") {
                                     const loserSelectionId = item1.SelectionId
                                     //    console.log(item1.selectionId,item1.status,winnerSelectionId )
 
