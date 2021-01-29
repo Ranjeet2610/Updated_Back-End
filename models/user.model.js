@@ -176,6 +176,10 @@ var matchOddSchema = new mongoose.Schema({
 var FancyOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
   marketId:{type:Number,default:0},
+  LayPrice:{type:String, default:0},
+  LaySize:{type:String, default:0},
+  BackPrice:{type:String, default:0},
+  BackSize:{type:String, default:0},
   isEnabled:{type:Boolean,default:true},
   isVisible:{type:Boolean,default:false},
   isSuspended:{type:Boolean, default: false},
@@ -183,6 +187,7 @@ var FancyOddSchema = new mongoose.Schema({
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false},
   active:{type:Boolean,default:true},
+  status: {type: String, default:''}
 
 })
 
