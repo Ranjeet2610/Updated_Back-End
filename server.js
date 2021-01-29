@@ -1,4 +1,3 @@
-
 var express = require('express');
 var Request = require("request");
 const cron = require("node-cron");
@@ -87,6 +86,7 @@ cron.schedule(" 30 * * * *", function() {
 });
 
 cron.schedule(" 10 * * * *", function() {
+
   Request.get({
     "headers": {"content-type": "application/json" },
     "url": "http://65.1.37.38:4000/api/BetSettleFancyOdds",
@@ -100,6 +100,8 @@ cron.schedule(" 10 * * * *", function() {
  
 });
 
+<<<<<<< HEAD
+=======
 cron.schedule("*/5 * * * * *", function() {
   Request.get({
     "headers": {"content-type": "application/json" },
@@ -112,6 +114,7 @@ cron.schedule("*/5 * * * * *", function() {
   
 })
 })
+>>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
     console.log(`Server is running on ${properties.PORT} port.`);
