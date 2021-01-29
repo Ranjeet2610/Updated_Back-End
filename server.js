@@ -75,11 +75,7 @@ cron.schedule(" 30 * * * *", function() {
 
   Request.get({
     "headers": {"content-type": "application/json" },
-<<<<<<< HEAD
-    "url": "http://localhost:4000/api/BetSettleMatchOdds",
-=======
     "url": "http://65.1.37.38:4000/api/BetSettleMatchOdds",
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 }, (error,response,body) => {
     if(error) {
         return console.log(error);
@@ -93,11 +89,7 @@ cron.schedule(" 30 * * * *", function() {
 cron.schedule(" 10 * * * *", function() {
   Request.get({
     "headers": {"content-type": "application/json" },
-<<<<<<< HEAD
-    "url": "http://localhost:4000/api/BetSettleFancyOdds",
-=======
     "url": "http://65.1.37.38:4000/api/BetSettleFancyOdds",
->>>>>>> 66216b2acfff5917d3c883846ab358a58d30ea0b
 }, (error,response,body) => {
     if(error) {
         return console.log(error);
