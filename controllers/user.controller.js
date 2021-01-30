@@ -468,7 +468,6 @@ exports.getLiveEvents = async (req,res) => {
 //list market type and market odds
 
 exports.listEventsDataById = async (req,res) =>{
-    //
     let eventIds= req.body.EventId
     Request.get({"headers": { "content-type": "application/json" },
     "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
@@ -477,8 +476,14 @@ exports.listEventsDataById = async (req,res) =>{
         if(error) {
             return console.log(error);
         }
-        const marketData = JSON.parse(body)
-        let marketIds = marketData[0].marketId;
+        const marketData = JSON.parse(body);
+        let marketIds = '';
+        if(marketData[0].marketName == "Match Odds"){
+            marketIds = marketData[0].marketId;
+        } else if (marketData[1].marketName == "Match Odds") {
+            marketIds = marketData[1].marketId;
+        }
+        
        
         Request.get({
             "headers": { "content-type": "application/json" },
