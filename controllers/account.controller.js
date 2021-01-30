@@ -533,33 +533,26 @@ exports.placeBet = (req, res) => {
         let team1 = JSON.parse(req.body.description).name.split(' v ')[0];
         let team2 = JSON.parse(req.body.description).name.split(' v ')[1];
 
-        DB.user.findOne({userName:req.body.userName}).then((user) => {
-            if(user){
+        DB.user.findOne({ userName: req.body.userName }).then((user) => {
+            console.log(user)
+            if (user) {
                 let ProfitLoss = 0;
                 if (req.body.bettype === 'Back') {
                     ProfitLoss = req.body.profit;
                 } else {
                     ProfitLoss = req.body.loss;
                 }
-                // console.log(user.exposure);
-                DB.betting.find({clientName:req.body.userName, eventID: req.body.eventID}).then((bets) => {
-                    let exp1 = Utils.calculateExposure(bets, team1, team2, '');
-                    let exp2 = Utils.calculateExposure(bets, team2, team1, '');
-                    let exp3 = Utils.calculateExposure(bets, team1, team2, 'The Draw');
-                    if(exp3.loss !== null && exp3.profit !== null){
-                        let exposures = [exp1.loss-exp2.profit+exp3.loss, exp1.loss-exp3.profit+exp2.loss, 
-                            exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
-                            exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
-                        user.exposure = parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest([exposures]));
-                    }else{
-                        if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
-                            user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss - exp2.profit);
-                        }else{
-                            user.exposure = parseFloat(user.exposure) - parseFloat(exp2.loss - exp1.profit);
-                        }
+                console.log(user.exposure);
+                DB.betting.find({ clientName: req.body.userName, eventID: req.body.eventID }).then((bets) => {
+                    let exp1 = Utils.calculateExposure(bets, team1, team2);
+                    let exp2 = Utils.calculateExposure(bets, team2, team1);
+                    if (exp1.loss - exp2.profit >= exp2.loss - exp1.profit) {
+                        user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss - exp2.profit);
+                    } else {
+                        user.exposure = parseFloat(user.exposure) - parseFloat(exp2.loss - exp1.profit);
                     }
-                    // console.log('1:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
-                    var betting = new DB.betting ({
+                    console.log('1:exp1:', exp1.loss - exp2.profit, ' exp2:', exp2.loss - exp1.profit, ' user.exposure:', user.exposure);
+                    var betting = new DB.betting({
                         clientName: req.body.userName,
                         userid: user,
                         IP: req.body.IP,
@@ -578,29 +571,21 @@ exports.placeBet = (req, res) => {
                         profit: req.body.profit,
                         liability: req.body.loss
                     })
-                    // console.log(betting)
-                    betting.save().then((saved)=>{
-                        if(!saved){
-                            return res.send({status:false, message:"Technical Error"})
+                    console.log(betting)
+                    betting.save().then((saved) => {
+                        if (!saved) {
+                            return res.send({ status: false, message: "Technical Error" })
                         }
-                        DB.betting.find({clientName:req.body.userName, eventID:req.body.eventID}).then((bets) => {
-                            let exp1 = Utils.calculateExposure(bets, team1, team2,'');
-                            let exp2 = Utils.calculateExposure(bets, team2, team1,'');
-                            let exp3 = Utils.calculateExposure(bets, team1, team2, 'The Draw');
-                            if(exp3.loss !== null && exp3.profit !== null){
-                                let exposures = [exp1.loss-exp2.profit+exp3.loss, exp1.loss-exp3.profit+exp2.loss, 
-                                exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
-                                exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
-                                user.exposure = parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest([exposures]));
-                            }else{
-                                if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
-                                    user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss - exp2.profit);
-                                }else{
-                                    user.exposure = parseFloat(user.exposure) + parseFloat(exp2.loss - exp1.profit);
-                                }
+                        DB.betting.find({ clientName: req.body.userName, eventID: req.body.eventID }).then((bets) => {
+                            let exp1 = Utils.calculateExposure(bets, team1, team2);
+                            let exp2 = Utils.calculateExposure(bets, team2, team1);
+                            if (exp1.loss - exp2.profit >= exp2.loss - exp1.profit) {
+                                user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss - exp2.profit);
+                            } else {
+                                user.exposure = parseFloat(user.exposure) + parseFloat(exp2.loss - exp1.profit);
                             }
-                            // console.log('2:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
-                            user.walletBalance = parseFloat(user.freeChips) - parseFloat(user.exposure);
+                            console.log('2:exp1:', exp1.loss - exp2.profit, ' exp2:', exp2.loss - exp1.profit, ' user.exposure:', user.exposure);
+                            user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack);
                             user.save().then((updatedUser) => {
                                 return res.send({ status: true, message: "Bet place successfully", data: updatedUser, bettingData: saved });
                             });

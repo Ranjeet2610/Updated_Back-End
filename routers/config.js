@@ -1,7 +1,6 @@
 module.exports = {
     PORT : 4000,
-    DB : 'mongodb+srv://prempal:Mmq0SvdyINY6MQvM@cluster0-pstjj.mongodb.net/casino?retryWrites=true&w=majority',
-    //DB: "mongodb://127.0.0.1:27017/casino",
+    DB : 'mongodb+srv://prempal:RzV5zNpFdvdMDzmV@cluster0-pstjj.mongodb.net/casino?retryWrites=true&w=majority',
     date_format: {
         ONE: 'dd-mm-yyyy hh:mm:ss',//5-12-2020 13:18:58
         TWO:'dd/mm/yyyy hh:mm:ss',//5/12/2020 13:18:58
@@ -14,4 +13,3 @@ module.exports = {
     BetFairAPIURL:'https://api.betfair.com/exchange/betting/json-rpc/v1'
 
 }
-
