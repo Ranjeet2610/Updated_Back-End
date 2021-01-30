@@ -532,9 +532,10 @@ exports.listMarketType = async (req,res) => {
             return console.log(error);
         }
         const bodyData = JSON.parse(body)
+       let data = bodyData.filter(e => e.marketName == "Match Odds")
         // var sortedObjs = _.sortBy(bodyData[0].result, 'marketId');
         // console.log(sortedObjs)
-        return res.send({status:true, message:"live sports events", data:bodyData})
+        return res.send({status:true, message:"live sports events", data: data})
     });
 }
 
