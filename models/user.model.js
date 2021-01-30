@@ -165,8 +165,8 @@ var eventSchema = new mongoose.Schema({
 
 var matchOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
- marketId:{type:Number,default:0},
- isEnabled:{type:Boolean,default:true},
+  marketId:{type:Number,default:0, get: getDecimalNumber, set: setDecimalNumber},
+  isEnabled:{type:Boolean,default:true},
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false}
 

@@ -13,7 +13,7 @@ module.exports = {
         }
       });
     } else {
-      return res.send(401);
+      return res.sendStatus(401);
     }
   }
 };

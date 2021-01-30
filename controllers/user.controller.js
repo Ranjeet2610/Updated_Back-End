@@ -692,13 +692,15 @@ exports.storeMarketType = async (req,res)=>{
                 json: true
             }
             rps(options).then(body => {
-                body.map((item,index)=>{
-                    var matchOdds = new DB.matchOdds({
+                let data = body.filter(e => e.marketName == "Match Odds");
+                data.map((item,index)=>{
+                    let matchOddsObj = {
                         eventId: eventIds,
                         marketId:item.marketId,
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
-                    })
+                    }
+                    let matchOdds = new DB.matchOdds(matchOddsObj);
                    matchOdds.save(function(err,result){ 
                     if (err){ 
                         console.log(err); 
@@ -706,7 +708,7 @@ exports.storeMarketType = async (req,res)=>{
                     else{ 
                         console.log(result) 
                     } 
-                }) 
+                    }) 
 
                    item.runners.map((item1,index)=>{
                     var matchRunner = new DB.matchRunner({
@@ -728,7 +730,7 @@ exports.storeMarketType = async (req,res)=>{
                 
 
         }).catch(function (err) {
-           return err;
+            console.log(err.message);
 
         });
         let option1 = {
