@@ -768,7 +768,9 @@ exports.storeMarketType = async (req,res)=>{
 
                 })
             }
-        })
+        }).catch(function (err) {
+            console.log(err.message)
+        });
         
         if(i == events.length-1){
             res.send({status:true, message:"events stored successfully"})
@@ -839,7 +841,10 @@ exports.storeFancyOddsCron = (req, res) => {
     
                     })
                 }
-            })
+            }).catch(function (err) {
+                console.log(err.message)
+            });
+
             if(i == events.length-1){
                 res.send({status:true, message:"events stored successfully"})
             }
