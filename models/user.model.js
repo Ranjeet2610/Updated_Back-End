@@ -138,7 +138,7 @@ var bettingSchema = new mongoose.Schema({
   selection:{type:String,required:true},
   bettype:{type:String,required:true},
   selectionID:{type:Number,required:true},
-  marketID:{type:Number,required:true},
+  marketID:{type:String,required:true},
   eventID:{type:Number,required:true},
   stack:{type:Number,required:true},
   odds:{type:Number,required:true},
@@ -165,7 +165,7 @@ var eventSchema = new mongoose.Schema({
 
 var matchOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
-  marketId:{type:Number,default:0, get: getDecimalNumber, set: setDecimalNumber},
+  marketId:{type:String,default:0},
   isEnabled:{type:Boolean,default:true},
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false}
@@ -175,7 +175,7 @@ var matchOddSchema = new mongoose.Schema({
 
 var FancyOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
-  marketId:{type:Number,default:0},
+  marketId:{type:String,default:0},
   LayPrice:{type:String, default:0},
   LaySize:{type:String, default:0},
   BackPrice:{type:String, default:0},
@@ -193,7 +193,7 @@ var FancyOddSchema = new mongoose.Schema({
 
 // match runner
 var matchRunnerSchema = new mongoose.Schema({
-  marketId:{type:Number,default:0},
+  marketId:{type:String,default:0},
   selectionId:{type:Number,default:0},
   runnerName:{type:String,unique:false}
 
@@ -202,7 +202,7 @@ var matchRunnerSchema = new mongoose.Schema({
 // fancy runner
 
 var FancyRunnerSchema = new mongoose.Schema({
-  marketId:{type:Number,default:0},
+  marketId:{type:String,default:0},
   selectionId:{type:Number,default:0},
   runnerName:{type:String,unique:false},
   isRunnersVisible:{type:Boolean,default:false},
