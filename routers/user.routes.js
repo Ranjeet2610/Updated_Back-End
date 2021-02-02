@@ -94,6 +94,8 @@ module.exports = function(router) {
     router.post('/updateMyprofile',Token.checkToken, Auth.updateMyprofile);
     router.post('/getUserOpenBetHistory', Account.getUserOpenBetHistory);
     router.post('/getUserOpenfancyBetHistory', Account.getUserOpenfancyBetHistory);
+    router.post('/getUserOpenfancyBetHistoryfront', Account.getUserOpenfancyBetHistoryfront);
+    
     router.post('/getMasterSectionOpenBetHistory', Account.getMasterSectionOpenBetHistory);
     router.post('/getAdminSectionOpenBetHistory', Account.getAdminSectionOpenBetHistory);
     router.post('/getSuperAdminSectionOpenBetHistory', Account.getSuperAdminSectionOpenBetHistory);
