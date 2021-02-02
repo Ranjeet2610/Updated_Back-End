@@ -675,7 +675,7 @@ exports.placeFancyBet = (req, res) => {
                 }
                 DB.user.findOne({ userName: req.body.userName }).then((user) => {
                     user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack)
-                    user.exposure = parseFloat(user.exposure) + parseFloat(req.body.loss)
+                    user.exposure = parseFloat(user.exposure) + (req.body.loss)
                     user.save().then((updatedUser) => {
                         return res.send({
                             status: true,
@@ -1463,7 +1463,9 @@ exports.BetSettleFancyOdds = (req, res) => {
 
     DB.FancyOdds.find().then((marketType) => {
         // console.log(marketType)
-        marketType.map((item, index) => {
+        let marketData = marketType;
+        importFancyOddsData();
+        marketData.map((item, index) => {
             //  console.log(item.marketId)
             var eventId = item.eventId;
             let marketIds = item.marketId;
@@ -2647,4 +2649,19 @@ exports.getTotalExposure = (req, res) => {
 
     })
 
+}
+
+function importFancyOddsData () {
+    setTimeout(function(){
+        Request.get({
+        "headers": {"content-type": "application/json" },
+        "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
+        }, (error,response,body) => {
+            if(error) {
+                return console.log(error);
+            }
+            console.log("Import data again");
+    
+        })
+    }, 3000);
 }

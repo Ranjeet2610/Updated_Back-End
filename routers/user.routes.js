@@ -83,8 +83,8 @@ module.exports = function(router) {
     router.post('/placeBet',Token.checkToken, Account.placeBet);
     router.post('/placeFancyBet',Token.checkToken,Account.placeFancyBet);
     
-    router.get('/BetSettleFancyOdds',Token.checkToken,Account.BetSettleFancyOdds);
-    router.get('/BetSettleMatchOdds',Token.checkToken,Account.BetSettleMatchOdds);
+    router.get('/BetSettleFancyOdds', Account.BetSettleFancyOdds);
+    router.get('/BetSettleMatchOdds', Account.BetSettleMatchOdds);
     router.post('/updateUserSportsInfo',Token.checkToken, Auth.updateUserSportsInfo);
     router.post('/updateUserChipsInfo', Auth.updateUserChipsInfo);
     router.post('/userSportsInfo',Token.checkToken, Auth.userSportsInfo);
