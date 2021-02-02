@@ -603,7 +603,10 @@ exports.marketTypeData= (req,res) =>{
 const fobject= {};
 
     DB.matchOdds.find({eventId:req.body.eventId}).then((marketType)=>{
-
+        if(marketType[0] == undefined){
+            return res.send({status:1,message:"market type and runners",data:[]})
+           }
+   
         // console.log(marketType[0])
         //marketType[0].test = 12; 
         fobject.marketData = marketType[0]
