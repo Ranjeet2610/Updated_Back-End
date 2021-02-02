@@ -913,6 +913,28 @@ exports.getUserOpenfancyBetHistory = async (req, res) => {
     }
 }
 
+exports.getUserOpenfancyBetHistoryfront = async (req, res) => {
+    try {
+
+        username = req.body.userName
+        eventid = req.body.eventId
+
+        await DB.betting.find({ clientName: username, eventID: eventid, status: "open", marketType: "Fancy" }).then((betdata) => {
+            if (betdata) {
+
+                return res.send({ status: true, message: "", data: betdata })
+            }
+
+        })
+
+
+    } catch (error) {
+
+        return res.send({ status: false, message: "technical error2", })
+
+
+    }
+}
 // get master all users open bet history
 
 exports.getMasterOpenBetHistory = async (req, res) => {
