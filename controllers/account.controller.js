@@ -675,7 +675,7 @@ exports.placeFancyBet = (req, res) => {
                 }
                 DB.user.findOne({ userName: req.body.userName }).then((user) => {
                     user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack)
-                    user.exposure = parseFloat(user.exposure) + (req.body.loss)
+                    user.exposure = parseFloat(user.exposure) + parseFloat(req.body.loss)
                     user.save().then((updatedUser) => {
                         return res.send({
                             status: true,
