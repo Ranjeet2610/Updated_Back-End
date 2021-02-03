@@ -1493,7 +1493,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                                     //    console.log(item1.selectionId,item1.status,winnerSelectionId )
 
 
-                                    DB.betting.find({ status: "open", marketID: marketIds, selectionID: item1.SelectionId }).then((openBets) => {
+                                    DB.betting.find({ status: "open", marketID: item1.SelectionId, selectionID: item1.SelectionId }).then((openBets) => {
 
                                         openBets.map((item3, index) => {
 
@@ -2663,5 +2663,5 @@ function importFancyOddsData () {
             console.log("Import data again");
     
         })
-    }, 3000);
+    }, 60000);
 }

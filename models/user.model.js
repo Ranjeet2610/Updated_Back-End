@@ -180,7 +180,7 @@ var FancyOddSchema = new mongoose.Schema({
   LaySize:{type:String, default:0},
   BackPrice:{type:String, default:0},
   BackSize:{type:String, default:0},
-  isEnabled:{type:Boolean,default:true},
+  isEnabled:{type:Boolean,default:false},
   isVisible:{type:Boolean,default:false},
   isSuspended:{type:Boolean, default: false},
   isBallRunning:{type:Boolean, default: false},
