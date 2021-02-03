@@ -1488,7 +1488,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                             // console.log(oddsData[0].runners[0].selectionId,oddsData[0].runners[0].status)
                             oddsData.map((item1, index) => {
                                 // console.log(item1.selectionId,item1.status)
-                                if (item1.GameStatus === "OFFLINE") {
+                                if (item1.GameStatus === "SUSPENDED") {
                                    // const winnerSelectionId = item1.SelectionId
                                     //    console.log(item1.selectionId,item1.status,winnerSelectionId )
 
