@@ -646,24 +646,23 @@ exports.fancyMarketTypeData= async (req,res) =>{
                             //console.log("successfully updated")
                         });
                         marketIds = marketIds.filter(d => {return d !=e.SelectionId});
-                        var fancyData = new DB.fancyData({
-                            eventId: eventIds,
-                            marketId:item.SelectionId,
-                            selectionId: item.SelectionId,
-                            marketName: item.RunnerName,
-                            LayPrice: item.LayPrice1,
-                            LaySize: item.LaySize1,
-                            BackPrice: item.BackPrice1,
-                            BackSize: item.BackSize1,
-                            status: item.GameStatus
-                        })
-                        fancyData.save(function(err,result){ 
-                            if (err){ 
-                                console.log(err); 
-                            } 
-                            else{ 
-                                //console.log(result) 
-                            } 
+                        DB.fancyScemaa.insertMany([{
+                            eventId: req.body.eventId,
+                            marketId:e.SelectionId,
+                            selectionId: e.SelectionId,
+                            marketName: e.RunnerName,
+                            LayPrice: e.LayPrice1,
+                            LaySize: e.LaySize1,
+                            BackPrice: e.BackPrice1,
+                            BackSize: e.BackSize1,
+                            status: e.GameStatus
+                        }],
+                        function(err, result) {
+                          if (err) {
+                            console.log(err);
+                          } else {
+                            //console.log(result);
+                          }
                         }) 
                     });
                     let cond = {marketId: {$in: marketIds}, status: {$ne: "CLOSED"}};
