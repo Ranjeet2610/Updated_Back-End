@@ -1537,7 +1537,7 @@ exports.getUserSectionProfitAndLoss = async (req, res) => {
         let D1 = new Date(req.body.date1);
         let D2 = new Date(req.body.date2);
 
-        unique = await Utils.uniqueEventsID(req.body.userName, D1, D2);
+        let unique = await Utils.uniqueEventsID(req.body.userName, D1, D2);
 
 
         let bettingData = [];
