@@ -674,7 +674,7 @@ exports.placeFancyBet = (req, res) => {
                     return res.send({ status: false, message: "Technical Error" })
                 }
                 DB.user.findOne({ userName: req.body.userName }).then((user) => {
-                    user.walletBalance = parseFloat(user.walletBalance) - parseFloat(user.stack)
+                    user.walletBalance = parseFloat(user.walletBalance) - parseFloat(req.body.stack)
                     user.exposure = parseFloat(user.exposure) + parseFloat(req.body.loss)
                     user.save().then((updatedUser) => {
                         return res.send({
