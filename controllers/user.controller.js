@@ -821,21 +821,56 @@ exports.storeFancyOddsCron = (req, res) => {
             rps(options).then(body => {
                 if(body.message == undefined){
                     body.map((item,index)=>{
-                        let cond = {eventId: eventIds,marketId:item.SelectionId};
-                        let updateVal = {
-                            eventId: eventIds,
-                            marketId:item.SelectionId,
-                            marketName: item.RunnerName,
-                            LayPrice: item.LayPrice1,
-                            LaySize: item.LaySize1,
-                            BackPrice: item.BackPrice1,
-                            BackSize: item.BackSize1,
-                            status: item.GameStatus
-                        }
-                        DB.FancyOdds.updateOne(cond, updateVal,{ upsert: true });
-                        let cond1 = {marketId:item.SelectionId, selectionId: item.SelectionId}
-                        let updateVal1 = {marketId:item.SelectionId, selectionId: item.SelectionId, runnerName:item.RunnerName}
-                        DB.FancyRunner.updateOne(cond1, updateVal1, {upsert: true});
+                        DB.FancyOdds.find({eventId: eventIds, marketId:item.SelectionId}, function(err, data){
+                            if(err){
+                                console.log(err);
+                            }
+                            if(data.length >0){
+                                let cond = {eventId: eventIds,marketId:item.SelectionId};
+                                let updateVal = {
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                }
+                                DB.FancyOdds.update(cond, updateVal);
+                            } else{
+                                var FancyOdds = new DB.FancyOdds({
+                                    eventId: eventIds,
+                                    marketId:item.SelectionId,
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                })
+                                FancyOdds.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                        console.log(result) 
+                                    } 
+                                }) 
+                                var FancyRunner = new DB.FancyRunner({
+                                      marketId:item.SelectionId,
+                                      selectionId: item.SelectionId,
+                                      runnerName:item.RunnerName,
+                                  })
+                                  FancyRunner.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                        console.log(result) 
+                                    } 
+                                }) 
+                            }
+                        });
+                        
                     })
                 }
             }).catch(function (err) {
