@@ -181,7 +181,7 @@ var FancyOddSchema = new mongoose.Schema({
   BackPrice:{type:String, default:0},
   BackSize:{type:String, default:0},
   isEnabled:{type:Boolean,default:false},
-  isVisible:{type:Boolean,default:false},
+  isVisible:{type:Boolean,default:true},
   isSuspended:{type:Boolean, default: false},
   isBallRunning:{type:Boolean, default: false},
   marketName:{type:String,unique:false},
