@@ -1480,7 +1480,7 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                             deposit.save()
                                             userAccount.depositTransaction.push(deposit);
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.stack);
                                             if(item3.odds <= item.BackPrice) {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
@@ -1514,7 +1514,7 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                             withdraw.save()
                                             userAccount.withdrawTransaction.push(withdraw)
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure)- parseFloat(item3.stack);
                                             if(item3.odds > item.BackPrice) {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
