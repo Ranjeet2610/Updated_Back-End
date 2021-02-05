@@ -181,7 +181,7 @@ var FancyOddSchema = new mongoose.Schema({
   BackPrice:{type:String, default:0},
   BackSize:{type:String, default:0},
   isEnabled:{type:Boolean,default:false},
-  isVisible:{type:Boolean,default:false},
+  isVisible:{type:Boolean,default:true},
   isSuspended:{type:Boolean, default: false},
   isBallRunning:{type:Boolean, default: false},
   marketName:{type:String,unique:false},
@@ -248,7 +248,23 @@ var newsSchema = new mongoose.Schema({
   active:{type:Boolean,default:false},},
   { timestamps: true });
 
-
+let fancyData = new mongoose.Schema({
+  eventId: {type:Number,default:0},
+  marketId:{type:String,default:0},
+  selectionId:{type:String,default:0},
+  LayPrice:{type:String, default:0},
+  LaySize:{type:String, default:0},
+  BackPrice:{type:String, default:0},
+  BackSize:{type:String, default:0},
+  isEnabled:{type:Boolean,default:false},
+  isVisible:{type:Boolean,default:false},
+  isSuspended:{type:Boolean, default: false},
+  isBallRunning:{type:Boolean, default: false},
+  marketName:{type:String,unique:false},
+  marketStartTime:{type:String,unique:false},
+  active:{type:Boolean,default:true},
+  status: {type: String, default:''}
+});
 const user = mongoose.model('user',userSchema)
 const account = mongoose.model('account',accountSchema)
 const deposit = mongoose.model('deposit',depositSchema)
@@ -263,6 +279,7 @@ const manualMatchOdds= mongoose.model('manualMatchOdds',manualMatchOddSchema)
 const userSportsInfo= mongoose.model('userSportsInfo',userSportsInfoSchema)
 const userChipsInfo= mongoose.model('userChipsInfo',userChipsInfoSchema)
 const exposureInfo= mongoose.model('exposureInfo',exposureInfoSchema)
+const fancyScemaa = mongoose.model('fancyData',fancyData)
 const news= mongoose.model('news',newsSchema)
 
 
@@ -271,4 +288,4 @@ const news= mongoose.model('news',newsSchema)
 
 
 
-module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news}
+module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa}

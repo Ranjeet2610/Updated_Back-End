@@ -624,31 +624,40 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
-   let eventId = req.body.eventId;
+    DB.FancyOdds.find({eventId: req.body.eventId}).then(FancyData => {
+        let marketIds = []; 
+        FancyData.map(e=> marketIds.push(e.marketId));
+        let eventId = req.body.eventId;
         let options = {
             "headers": { "content-type": "application/json" },
             "url": "http://142.93.36.1/api/v1/listMarketBookSession",
             "qs": {"match_id": eventId},
             json: true
         }
-   Request(options, function (error, response, body) {
-       if (error) {
-           return res.status(500).json({ success: false, error: error }).end('');
-       } else {
-        if(body.message == undefined){
-           //let bodyData = JSON.parse(body);
-           body.map(e => {
-               let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
-               let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
-            DB.FancyOdds.updateMany(filter, query).then((result)=>{   
-                console.log("successfully updated")
-            });
-           })
-        }
-       }
-   });
+        Request(options, function (error, response, body) {
+            if (error) {
+               return res.status(500).json({ success: false, error: error }).end('');
+            } else {
+                if(body.message == undefined){
+                    body.map(e => {
+                        let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
+                        let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
+                        DB.FancyOdds.updateOne(filter, query).then((result)=>{   
+                            //console.log("successfully updated")
+                        });
+                        marketIds = marketIds.filter(d => {return d !=e.SelectionId});
+                    });
+                    let cond = {marketId: {$in: marketIds}, status: {$ne: "CLOSED"}};
+                    let updateDs = {$set: {status: "CLOSED"}};
+                    DB.FancyOdds.updateMany(cond, updateDs).then((result)=>{   
+                        //console.log("successfully updated")
+                    });
+                }
+           }
+        });
+    });
        
-    await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
+    await DB.FancyOdds.find({eventId:req.body.eventId, isVisible: true, status: {$ne: "CLOSED"}}).then((marketType)=>{
     var datafancy = marketType.map(async(item)=>{
         let fobject= {};
         runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
@@ -796,12 +805,6 @@ exports.storeMarketType = async (req,res)=>{
 }
 
 exports.storeFancyOddsCron = (req, res) => {
-    DB.FancyOdds.deleteMany().then((done)=>{
-        if (done) {
-            DB.FancyRunner.deleteMany().then((done)=>{
-            })
-        }
-    });
     DB.event.find().then((events)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
@@ -818,38 +821,56 @@ exports.storeFancyOddsCron = (req, res) => {
             rps(options).then(body => {
                 if(body.message == undefined){
                     body.map((item,index)=>{
-                        var FancyOdds = new DB.FancyOdds({
-                            eventId: eventIds,
-                            marketId:item.SelectionId,
-                            marketName: item.RunnerName,
-                            LayPrice: item.LayPrice1,
-                            LaySize: item.LaySize1,
-                            BackPrice: item.BackPrice1,
-                            BackSize: item.BackSize1,
-                            status: item.GameStatus
-                        })
-                        FancyOdds.save(function(err,result){ 
-                            if (err){ 
-                                console.log(err); 
-                            } 
-                            else{ 
-                                console.log(result) 
-                            } 
-                        }) 
-                        var FancyRunner = new DB.FancyRunner({
-                              marketId:item.SelectionId,
-                              selectionId: item.SelectionId,
-                              runnerName:item.RunnerName,
-                          })
-                          FancyRunner.save(function(err,result){ 
-                            if (err){ 
-                                console.log(err); 
-                            } 
-                            else{ 
-                                console.log(result) 
-                            } 
-                        }) 
-    
+                        DB.FancyOdds.find({eventId: eventIds, marketId:item.SelectionId}, function(err, data){
+                            if(err){
+                                console.log(err);
+                            }
+                            if(data.length >0){
+                                let cond = {eventId: eventIds,marketId:item.SelectionId};
+                                let updateVal = {
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                }
+                                DB.FancyOdds.update(cond, updateVal);
+                            } else{
+                                var FancyOdds = new DB.FancyOdds({
+                                    eventId: eventIds,
+                                    marketId:item.SelectionId,
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                })
+                                FancyOdds.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                        console.log(result) 
+                                    } 
+                                }) 
+                                var FancyRunner = new DB.FancyRunner({
+                                      marketId:item.SelectionId,
+                                      selectionId: item.SelectionId,
+                                      runnerName:item.RunnerName,
+                                  })
+                                  FancyRunner.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                        console.log(result) 
+                                    } 
+                                }) 
+                            }
+                        });
+                        
                     })
                 }
             }).catch(function (err) {
