@@ -639,34 +639,14 @@ exports.fancyMarketTypeData= async (req,res) =>{
                return res.status(500).json({ success: false, error: error }).end('');
             } else {
                 if(body.message == undefined){
-                    let insertData = [];
                     body.map(e => {
                         let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
                         let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
-                        DB.FancyOdds.update(filter, query).then((result)=>{   
+                        DB.FancyOdds.updateOne(filter, query).then((result)=>{   
                             //console.log("successfully updated")
                         });
                         marketIds = marketIds.filter(d => {return d !=e.SelectionId});
-                        let d = {
-                            eventId: req.body.eventId,
-                            marketId:e.SelectionId,
-                            selectionId: e.SelectionId,
-                            marketName: e.RunnerName,
-                            LayPrice: e.LayPrice1,
-                            LaySize: e.LaySize1,
-                            BackPrice: e.BackPrice1,
-                            BackSize: e.BackSize1,
-                            status: e.GameStatus
-                        }
-                        insertData.push(d);
                     });
-                    DB.fancyScemaa.insertMany(insertData,function(err, result) {
-                      if (err) {
-                        console.log(err);
-                      } else {
-                        //console.log(result);
-                      }
-                    }) 
                     let cond = {marketId: {$in: marketIds}, status: {$ne: "CLOSED"}};
                     let updateDs = {$set: {status: "CLOSED"}};
                     DB.FancyOdds.updateMany(cond, updateDs).then((result)=>{   
@@ -677,7 +657,7 @@ exports.fancyMarketTypeData= async (req,res) =>{
         });
     });
        
-    await DB.FancyOdds.find({eventId:req.body.eventId, status: {$ne: "CLOSED"}}).then((marketType)=>{
+    await DB.FancyOdds.find({eventId:req.body.eventId, isVisible: true, status: {$ne: "CLOSED"}}).then((marketType)=>{
     var datafancy = marketType.map(async(item)=>{
         let fobject= {};
         runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
@@ -852,10 +832,10 @@ exports.storeFancyOddsCron = (req, res) => {
                             BackSize: item.BackSize1,
                             status: item.GameStatus
                         }
-                        DB.FancyOdds.update(cond, updateVal,{ upsert: true });
+                        DB.FancyOdds.updateOne(cond, updateVal,{ upsert: true });
                         let cond1 = {marketId:item.SelectionId, selectionId: item.SelectionId}
                         let updateVal1 = {marketId:item.SelectionId, selectionId: item.SelectionId, runnerName:item.RunnerName}
-                        DB.FancyRunner.update(cond1, updateVal1, {upsert: true});
+                        DB.FancyRunner.updateOne(cond1, updateVal1, {upsert: true});
                     })
                 }
             }).catch(function (err) {
