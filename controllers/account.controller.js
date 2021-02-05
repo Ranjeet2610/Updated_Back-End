@@ -1479,8 +1479,15 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             })
 
                                             deposit.save()
-                                            userAccount.depositTransaction.push(deposit)
-                                            userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.profit)
+                                            userAccount.depositTransaction.push(deposit);
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
+                                            if(item3.odds <= item.BackPrice) {
+                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
+                                                userUpdated.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                            } else {
+                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
+                                            }
+                                            
                                             lastDepositDate = new Date()
                                             userAccount.save()
                                             userUpdated.save().then((saved) => {
@@ -1507,7 +1514,13 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                             withdraw.save()
                                             userAccount.withdrawTransaction.push(withdraw)
-                                            userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(req.body.fillAmount)
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
+                                            if(item3.odds > item.BackPrice) {
+                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
+                                                userUpdated.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                            } else {
+                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
+                                            }
                                             userAccount.lastWithdrawDate = new Date()
                                             userAccount.save()
                                             userUpdated.save().then((saved) => {
