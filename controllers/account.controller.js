@@ -1483,7 +1483,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
                                             if(item3.odds <= item.BackPrice) {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
-                                                userUpdated.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
                                             } else {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
                                             }
@@ -1517,7 +1517,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
                                             if(item3.odds > item.BackPrice) {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
-                                                userUpdated.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
                                             } else {
                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
                                             }
