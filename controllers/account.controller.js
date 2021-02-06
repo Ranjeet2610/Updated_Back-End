@@ -1480,13 +1480,10 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                             deposit.save()
                                             userAccount.depositTransaction.push(deposit);
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.stack);
-                                            if(item3.odds <= item.BackPrice) {
-                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
+                                            if(item3.odds <= item.BackPriceSettle) {
                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                            } else {
-                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
-                                            }
+                                            } 
                                             
                                             lastDepositDate = new Date()
                                             userAccount.save()
@@ -1514,12 +1511,9 @@ exports.BetSettleFancyOdds = (req, res) => {
 
                                             withdraw.save()
                                             userAccount.withdrawTransaction.push(withdraw)
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure)- parseFloat(item3.stack);
-                                            if(item3.odds > item.BackPrice) {
-                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.P_L);
+                                            userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
+                                            if(item3.odds > item.LayPriceSettle) {
                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                            } else {
-                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(item3.stack);
                                             }
                                             userAccount.lastWithdrawDate = new Date()
                                             userAccount.save()

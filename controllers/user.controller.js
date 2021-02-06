@@ -640,7 +640,12 @@ exports.fancyMarketTypeData= async (req,res) =>{
             } else {
                 if(body.message == undefined){
                     body.map(e => {
-                        let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
+                        let query = '';
+                        if (e.LayPrice1 != 'Ball' & e.LayPrice1 != 'Suspended') {
+                            query = {$set: {LayPrice: e.LayPrice1,LayPriceSettle: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackPriceSettle: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
+                        } else{
+                            query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
+                        }
                         let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
                         DB.FancyOdds.updateOne(filter, query).then((result)=>{   
                             //console.log("successfully updated")
