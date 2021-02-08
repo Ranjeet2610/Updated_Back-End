@@ -135,7 +135,7 @@ module.exports = function(router) {
     router.delete('/news/:id',Token.checkToken, Auth.deleteNews);
 
     //code for news added by shreesh
-    router.get('/liveCricketScore',Token.checkToken, Auth.getLiveCricketScore);
+    router.get('/liveCricketScore', Auth.getLiveCricketScore);
 
     router.patch('/adminWalletBalance',Token.checkToken, Auth.updateAdminWalletbalance);
 

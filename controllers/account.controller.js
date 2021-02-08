@@ -1513,7 +1513,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             userAccount.withdrawTransaction.push(withdraw)
                                             userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
                                             if(item3.odds > item.LayPriceSettle) {
-                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
                                             }
                                             userAccount.lastWithdrawDate = new Date()
                                             userAccount.save()

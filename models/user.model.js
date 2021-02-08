@@ -222,7 +222,35 @@ var manualMatchOddSchema = new mongoose.Schema({
  odds6:{type:Number,default:0},
 
 })
-// 
+
+let batsmen = new mongoose.Schema({
+  team: {type:String,default:0},
+  batsmenData: [{
+    id: {type: String,defualt: 0},
+    name: {type: String, default:0},
+    run: {type:String,default:0},
+    four: {type:String,default:0},
+    six: {type:String,default:0},
+    isOut: {type:String,default:0}
+  }],
+  
+});
+let bowlers = new mongoose.Schema({
+  id: {type:String,default:0},
+  name: {type:String,default:0},
+  wickets: {type:String,default:0}
+});
+
+let score = new mongoose.Schema({
+  team:{type:String,default:0},
+  scoreCard: [{
+    runs: {type:String,default:0},
+    overs:{type:String,default:0},
+    wickets:{type:String,default:0}
+  }]
+  
+});
+
 bettingSchema.pre('save', function (next) {
 
   // Only increment when the document is new
@@ -281,8 +309,11 @@ const manualMatchOdds= mongoose.model('manualMatchOdds',manualMatchOddSchema)
 const userSportsInfo= mongoose.model('userSportsInfo',userSportsInfoSchema)
 const userChipsInfo= mongoose.model('userChipsInfo',userChipsInfoSchema)
 const exposureInfo= mongoose.model('exposureInfo',exposureInfoSchema)
-const fancyScemaa = mongoose.model('fancyData',fancyData)
-const news= mongoose.model('news',newsSchema)
+const fancyScemaa = mongoose.model('fancyData', fancyData);
+const news= mongoose.model('news', newsSchema);
+const scoreCard = mongoose.model("score", score);
+const batsmenDetails = mongoose.model('batsmen', batsmen);
+const bowlersDetails = mongoose.model('bowlers', bowlers)
 
 
 
@@ -290,4 +321,4 @@ const news= mongoose.model('news',newsSchema)
 
 
 
-module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa}
+module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard, bowlersDetails, batsmenDetails}

@@ -13,10 +13,12 @@ module.exports = {
     APPKey:'ZkwpavU6no0r74Tk',
     BetFairAPIURL:'https://api.betfair.com/exchange/betting/json-rpc/v1',
     rapid_api_cricket_url: 'https://dev132-cricket-live-scores-v1.p.rapidapi.com/scorecards.php',
-    seriesid: '2141',
-    matchid: '43431',
+    rapid_api_All_match:'https://dev132-cricket-live-scores-v1.p.rapidapi.com/matches.php?completedlimit=0&inprogresslimit=100&upcomingLimit=0',
+    seriesid: '2728',
+    matchid: '49832',
     rapidapi_host: 'dev132-cricket-live-scores-v1.p.rapidapi.com',
-    rapidapi_key: 'ce5898839amsh6f28f4d4bd4885fp1ef301jsnbf48915aa537',
+    rapidapi_key: 'b462485e7cmsha63a9638ca8e8f7p122b7djsn1e69a1ad7aaf',
+    CriApikey: '3bCGQe5vMrOvdcGodthAnbGOomT2',
     useQueryString: true
 }
 
