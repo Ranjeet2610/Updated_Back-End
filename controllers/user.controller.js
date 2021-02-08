@@ -628,7 +628,7 @@ exports.fancyMarketTypeData= async (req,res) =>{
         getAllMatch(eventData.eventName, function(data) {
             getCricektScore(data, score =>{
                 var Scorequery = {team: score.name, "scoreCard.overs": { "$ne": score.over }},
-                Scoreupdate = {team: score.name, "scoreCard":{ runs: score.run, overs: score.over, wickets: score.wicket }},
+                Scoreupdate = {team: score.name,eventId:req.body.eventId,eventName:eventData.eventName, "scoreCard":{ runs: score.run, overs: score.over, wickets: score.wicket }},
                 options = { upsert: true, new: true, setDefaultsOnInsert: true };
                 DB.scoreCard.findOneAndUpdate(Scorequery, Scoreupdate, options, function(error, result) {
                     if (error)

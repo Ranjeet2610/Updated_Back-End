@@ -243,6 +243,8 @@ let bowlers = new mongoose.Schema({
 
 let score = new mongoose.Schema({
   team:{type:String,default:0},
+  eventId: {type:String,default:0},
+  eventName: {type:String,default:0},
   scoreCard: [{
     runs: {type:String,default:0},
     overs:{type:String,default:0},
