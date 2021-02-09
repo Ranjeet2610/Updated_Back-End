@@ -225,14 +225,12 @@ var manualMatchOddSchema = new mongoose.Schema({
 
 let batsmen = new mongoose.Schema({
   team: {type:String,default:0},
-  batsmenData: [{
-    id: {type: String,defualt: 0},
-    name: {type: String, default:0},
-    run: {type:String,default:0},
-    four: {type:String,default:0},
-    six: {type:String,default:0},
-    isOut: {type:String,default:0}
-  }],
+  id: {type: String,defualt: 0},
+  name: {type: String, default:0},
+  run: {type:String,default:0},
+  four: {type:String,default:0},
+  six: {type:String,default:0},
+  isOut: {type:String,default:0}
   
 });
 let bowlers = new mongoose.Schema({
@@ -245,11 +243,10 @@ let score = new mongoose.Schema({
   team:{type:String,default:0},
   eventId: {type:String,default:0},
   eventName: {type:String,default:0},
-  scoreCard: [{
-    runs: {type:String,default:0},
-    overs:{type:String,default:0},
-    wickets:{type:String,default:0}
-  }]
+  runs: {type:String,default:0},
+  overs:{type:String,default:0},
+  wickets:{type:String,default:0}
+  
   
 });
 

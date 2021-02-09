@@ -627,24 +627,27 @@ exports.fancyMarketTypeData= async (req,res) =>{
     DB.event.findOne({eventId: req.body.eventId}).then(eventData => {
         getAllMatch(eventData.eventName, function(data) {
             getCricektScore(data, score =>{
-                var Scorequery = {team: score.name, "scoreCard.overs": { "$ne": score.over }},
-                Scoreupdate = {team: score.name,eventId:req.body.eventId,eventName:eventData.eventName, "scoreCard":{ runs: score.run, overs: score.over, wickets: score.wicket }},
-                options = { upsert: true, new: true, setDefaultsOnInsert: true };
-                DB.scoreCard.findOneAndUpdate(Scorequery, Scoreupdate, options, function(error, result) {
-                    if (error)
-                    console.log(error);
-                });
-                if(score.length > 0){
+                if(score != undefined){
+                    var Scorequery = {overs: { "$eq": score.over }},
+                    Scoreupdate = {team: score.name, runs: score.run, overs: score.over, wickets: score.wicket},
+                    options = { upsert: true, new: true, setDefaultsOnInsert: true };
+                    DB.scoreCard.findOneAndUpdate(Scorequery, Scoreupdate, options, function(error, result) {
+                        if (error)
+                        console.log(error);
+                    });
                     score.batsmen.map(e => {
-                        let batsmenQuery = {team: score.name, "batsmenData.id": { "$eq": e.id }},
-                        batsmenUpdate = {team: score.name, "batsmenData":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: e.howOut}};
+                        let batsmenQuery = {"id": { "$eq": e.id }},
+                        isOut = 'not out';
+                        if (e.howOut != 'not out' && e.howOut != '') {
+                            isOut = 'out' ;
+                        }
+                        let batsmenUpdate = {team: score.name, id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut};
                         DB.batsmenDetails.findOneAndUpdate(batsmenQuery, batsmenUpdate, options, function(error, result) {
                             if (error){
                                 console.log(error)
                             };
                         });
                     });
-        
                     score.bowlers.map(e => {
                         let bowlersQuery = {id: e.id},
                         bowlersUpdate = {id: e.id, name: e.name, wickets: e.wickets};
@@ -2129,7 +2132,7 @@ function getCricektScore (match_id, callback){
             if(body.fullScorecard!= undefined)
             callback(body.fullScorecard.innings[0]);
             else
-            callback([])
+            callback(undefined)
         }
 
 
@@ -2139,24 +2142,27 @@ function getCricektScore (match_id, callback){
   
 // getAllMatch('India v England', function(data) {
 //     getCricektScore(data, score =>{
-//         var Scorequery = {team: score.name, "scoreCard.overs": { "$ne": score.over }},
-//         Scoreupdate = {team: score.name, "scoreCard":{ runs: score.run, overs: score.over, wickets: score.wicket }},
-//         options = { upsert: true, new: true, setDefaultsOnInsert: true };
-//         DB.scoreCard.findOneAndUpdate(Scorequery, Scoreupdate, options, function(error, result) {
-//             if (error)
-//             console.log(error);
-//         });
-//         if(score.length > 0){
+//         if(score != undefined){
+//             var Scorequery = {overs: { "$eq": score.over }},
+//             Scoreupdate = {team: score.name, runs: score.run, overs: score.over, wickets: score.wicket},
+//             options = { upsert: true, new: true, setDefaultsOnInsert: true };
+//             DB.scoreCard.findOneAndUpdate(Scorequery, Scoreupdate, options, function(error, result) {
+//                 if (error)
+//                 console.log(error);
+//             });
 //             score.batsmen.map(e => {
-//                 let batsmenQuery = {team: score.name, "batsmenData.id": { "$eq": e.id }},
-//                 batsmenUpdate = {team: score.name, "batsmenData":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: e.howOut}};
+//                 let batsmenQuery = {"id": { "$eq": e.id }},
+//                 isOut = 'not out';
+//                 if (e.howOut != 'not out' && e.howOut != '') {
+//                     isOut = 'out' ;
+//                 }
+//                 let batsmenUpdate = {team: score.name, id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut};
 //                 DB.batsmenDetails.findOneAndUpdate(batsmenQuery, batsmenUpdate, options, function(error, result) {
 //                     if (error){
 //                         console.log(error)
 //                     };
 //                 });
 //             });
-
 //             score.bowlers.map(e => {
 //                 let bowlersQuery = {id: e.id},
 //                 bowlersUpdate = {id: e.id, name: e.name, wickets: e.wickets};
@@ -2166,7 +2172,7 @@ function getCricektScore (match_id, callback){
 //                 });
 //             });
 //         }
-        
+
 //     })
 // });
 //DB.event.findOne({eventId: 2}).then(eventData => {if(eventData!=null)console.log("k") })
