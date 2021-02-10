@@ -223,29 +223,35 @@ var manualMatchOddSchema = new mongoose.Schema({
 
 })
 
-let batsmen = new mongoose.Schema({
-  team: {type:String,default:0},
-  id: {type: String,defualt: 0},
-  name: {type: String, default:0},
-  run: {type:String,default:0},
-  four: {type:String,default:0},
-  six: {type:String,default:0},
-  isOut: {type:String,default:0}
-  
-});
-let bowlers = new mongoose.Schema({
-  id: {type:String,default:0},
-  name: {type:String,default:0},
-  wickets: {type:String,default:0}
-});
-
 let score = new mongoose.Schema({
-  team:{type:String,default:0},
+  matchName:{type:String,default:0},
+  runningTeam: {type:String,default:0},
   eventId: {type:String,default:0},
-  eventName: {type:String,default:0},
+  overWicket: {type:String,default:0},
+  overRun: {type:String,default:0},
   runs: {type:String,default:0},
   overs:{type:String,default:0},
-  wickets:{type:String,default:0}
+  wickets:{type:String,default:0},
+  bowlers: [{
+    id: {type:String,default:0},
+    name: {type:String,default:0},
+    wickets: {type:String,default:0}
+  }],
+  batsmen: [{
+    id: {type: String,defualt: 0},
+    name: {type: String, default:0},
+    run: {type:String,default:0},
+    four: {type:String,default:0},
+    six: {type:String,default:0},
+    isOut: {type:String,default:0},
+    fallOfWicket: {type:String,default:0}
+  }],
+  fallOfWicket:[{
+    wicket:{type:String,default:0},
+    run: {type:String,default:0}
+  }],
+  status: {type:String,default:0},
+  winner: {type:String,default:0}
   
   
 });
@@ -311,8 +317,6 @@ const exposureInfo= mongoose.model('exposureInfo',exposureInfoSchema)
 const fancyScemaa = mongoose.model('fancyData', fancyData);
 const news= mongoose.model('news', newsSchema);
 const scoreCard = mongoose.model("score", score);
-const batsmenDetails = mongoose.model('batsmen', batsmen);
-const bowlersDetails = mongoose.model('bowlers', bowlers)
 
 
 
@@ -320,4 +324,5 @@ const bowlersDetails = mongoose.model('bowlers', bowlers)
 
 
 
-module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard, bowlersDetails, batsmenDetails}
+
+module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard}

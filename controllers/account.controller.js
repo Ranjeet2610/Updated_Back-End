@@ -1464,6 +1464,18 @@ exports.BetSettleFancyOdds = (req, res) => {
         let marketData = marketType;
         importFancyOddsData();
         marketData.map((item, index) => {
+            let odsyTypeData = fancyOddsStringCalc(item.marketName);
+            if(odsyTypeData != 'Manual'){
+                let scoreQuery = {eventId: item.eventId};
+                if (odsyTypeData[0] == 'BOUNDARIES'){
+                    scoreQuery = {eventId: item.eventId, "batsmen.name":{'$eq':odsyTypeData[1]}};
+                } else if (odsyTypeData[0] == 'FALL OF') {
+                    scoreQuery = {eventId: item.eventId, "fallOfWicket.wicket":{'$eq':odsyTypeData[1]}};
+                } else if (odsyTypeData[0] == 'ONLY') {
+                    scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
+                } else if(odsyTypeData[0] == 'OVER RUN') {
+                    scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
+                }
             DB.betting.find({ status: "open", marketID: item.marketId, selectionID: item.marketId }).then((openBets) => {
                 openBets.map((item3, index) => {
                     if (item3.bettype === "Back") {
@@ -1481,10 +1493,51 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             deposit.save()
                                             userAccount.depositTransaction.push(deposit);
                                             userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
-                                            if(item3.odds <= item.BackPriceSettle) {
-                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                            } 
-                                            
+                                            DB.scoreCard.findOne(scoreQuery).then(scoreData => {
+                                                if(scoreData != null){
+                                                    if (odsyTypeData[0] == 'BOUNDARIES'){
+                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
+                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
+                                                                if (item3.odds <= scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    } else if (odsyTypeData[0] == 'FALL OF') {
+                                                        for(var i = 0; i < scoreData.fallOfWicket; i++){
+                                                            if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
+                                                                if (item3.odds <= scoreData.batsmen[i].run) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    } else if (odsyTypeData[0] == 'ONLY') {
+                                                        if(scoreData.overs == odsyTypeData[1]){
+                                                            if (item3.odds <= scoreData.overRun) {
+                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                            }
+                                                        }
+                                                    } else if(odsyTypeData[0] == 'OVER RUN') {
+                                                        if(scoreData.overs == odsyTypeData[1]){
+                                                            if (item3.odds <= scoreData.runs) {
+                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                            }
+                                                           
+                                                        }
+                                                    } else if(odsyTypeData[0] == 'RUN'){
+                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
+                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
+                                                                if (item3.odds <= scoreData.batsmen[i].run) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            })
                                             lastDepositDate = new Date()
                                             userAccount.save()
                                             userUpdated.save().then((saved) => {
@@ -1512,9 +1565,50 @@ exports.BetSettleFancyOdds = (req, res) => {
                                             withdraw.save()
                                             userAccount.withdrawTransaction.push(withdraw)
                                             userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
-                                            if(item3.odds > item.LayPriceSettle) {
-                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                            }
+                                            DB.scoreCard.findOne(scoreQuery).then(scoreData => {
+                                                if(scoreData != null){
+                                                    if (odsyTypeData[0] == 'BOUNDARIES'){
+                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
+                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
+                                                                if (item3.odds > scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    } else if (odsyTypeData[0] == 'FALL OF') {
+                                                        for(var i = 0; i < scoreData.fallOfWicket; i++){
+                                                            if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
+                                                                if (item3.odds > scoreData.batsmen[i].run) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    } else if (odsyTypeData[0] == 'ONLY') {
+                                                        if(scoreData.overs == odsyTypeData[1]){
+                                                            if (item3.odds > scoreData.overRun) {
+                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                                            }
+                                                        }
+                                                    } else if(odsyTypeData[0] == 'OVER RUN') {
+                                                        if(scoreData.overs == odsyTypeData[1]){
+                                                            if (item3.odds > scoreData.runs) {
+                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                                            }
+                                                        }
+                                                    } else if(odsyTypeData[0] == 'RUN'){
+                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
+                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
+                                                                if (item3.odds > scoreData.batsmen[i].run) {
+                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            })
                                             userAccount.lastWithdrawDate = new Date()
                                             userAccount.save()
                                             userUpdated.save().then((saved) => {
@@ -1531,6 +1625,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                         } else { }
                     })
                 })
+            }
             })
     })
 }
@@ -2499,4 +2594,32 @@ function importFancyOddsData () {
     
         })
     }, 60000);
+}
+// R SHARMA BOUNDARIES 2 done
+// S GILL RUN 2 done
+// FALL OF 1ST WKT IND 2 done
+// ONLY 1 OVER RUN IND 2 done
+// R SHARMA RUN 2 done
+// S GILL BOUNDARIES 2 done
+// 15 OVER RUN
+
+function fancyOddsStringCalc(stringData){
+    if (stringData.includes('BOUNDARIES')) {
+        let playerName = stringData.split('BOUNDARIES')[0];
+        return ['BOUNDARIES', playerName];
+    } else if (stringData.includes('RUN') && !stringData.includes('INN') && !stringData.includes('OVER')) {
+        let playerName = stringData.split('RUN')[0]
+        return ['RUN', playerName];
+    } else if(stringData.includes('FALL OF')){
+        let d = stringData.split('FALL OF')[1][1];
+        return ['FALL OF', d];
+    } else if (stringData.includes('RUN') && stringData.includes('ONLY') && stringData.includes('OVER')){
+        let d = stringData.split('ONLY')[1].split(" ")[1];
+        return ['ONLY',d];
+    } else if (stringData.includes('RUN') && !stringData.includes('ONLY') && stringData.includes('OVER')){
+        let d = stringData.split('OVER RUN')[0];
+        return ['OVER RUN', d];
+    } else{
+        return 'Manual';
+    }
 }
