@@ -2057,7 +2057,7 @@ function getAllMatch(matchName, callback){
     };
     Request(options, function (error, response, body) {
         if (error) {
-            return res.status(500).json({ success: false, error: error }).end('');
+            console.log(error);
         } else {
             let d = ''
             body.matchList.matches.filter(e => {
