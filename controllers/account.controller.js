@@ -1544,6 +1544,7 @@ exports.BetSettleFancyOdds = (req, res) => {
                                                 item3.profit = item3.P_L;
                                                 item3.liability = 0;
                                                 item3.status = "settled";
+                                                item3.sattlementType = "automatic";
                                                 item3.save()
                                             })
                                     }
