@@ -71,36 +71,36 @@ authRoutes(router);
 
 // (" 0 08 * * *
 
-cron.schedule(" 30 * * * *", function() {
+// cron.schedule(" 30 * * * *", function() {
 
-  Request.get({
-    "headers": {"content-type": "application/json" },
-    "url": "http://65.1.37.38:4000/api/BetSettleMatchOdds",
-}, (error,response,body) => {
-    if(error) {
-        return console.log(error);
-    }
-      console.log("bet settle begin");
+//   Request.get({
+//     "headers": {"content-type": "application/json" },
+//     "url": "http://65.1.37.38:4000/api/BetSettleMatchOdds",
+// }, (error,response,body) => {
+//     if(error) {
+//         return console.log(error);
+//     }
+//       console.log("bet settle begin");
 
-});
+// });
  
-});
+// });
 
-cron.schedule(" 3 * * * *", function() {
-  Request.get({
-    "headers": {"content-type": "application/json" },
-    "url": "http://65.1.37.38:4000/api/BetSettleFancyOdds",
-}, (error,response,body) => {
-    if(error) {
-        return console.log(error);
-    }
-      console.log("bet settle begin");
+// cron.schedule(" 3 * * * *", function() {
+//   Request.get({
+//     "headers": {"content-type": "application/json" },
+//     "url": "http://65.1.37.38:4000/api/BetSettleFancyOdds",
+// }, (error,response,body) => {
+//     if(error) {
+//         return console.log(error);
+//     }
+//       console.log("bet settle begin");
 
-});
+// });
  
-});
+// });
 
-//cron.schedule("*/5 * * * * *", function() {
+// cron.schedule(" 2 * * * * *", function() {
 //   Request.get({
 //     "headers": {"content-type": "application/json" },
 //     "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",

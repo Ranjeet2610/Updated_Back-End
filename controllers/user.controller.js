@@ -624,9 +624,9 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
-    DB.event.findOne({eventId: req.body.eventId}).then(eventData => {
-        updateScoreCard(eventData.eventName);
-    })    
+    // DB.event.findOne({eventId: req.body.eventId}).then(eventData => {
+    //     updateScoreCard(eventData.eventName);
+    // })    
     DB.FancyOdds.find({eventId: req.body.eventId}).then(FancyData => {
         let marketIds = []; 
         FancyData.map(e=> marketIds.push(e.marketId));
@@ -2044,71 +2044,71 @@ async function dataSet(EventTypeID, compID){
 });
 }
   
-function getAllMatch(matchName, callback){
-    var options = {
-        method: 'GET',
-        url: properties.rapid_api_All_match,
-        headers: {
-            'x-rapidapi-host': properties.rapidapi_host,
-            'x-rapidapi-key': properties.rapidapi_key,
-            useQueryString: properties.useQueryString
-        },
-        json:true
-    };
-    Request(options, function (error, response, body) {
-        if (error) {
-            console.log(error);
-        } else {
-            let d = ''
-            if (body != undefined) {
-                body.matchList.matches.filter(e => {
-                    if(e.series.name.indexOf(matchName) != -1){
-                        let winningTeam = '';
-                        if(e.status == 'COMPLETED'){
-                            winningTeam = e.currentMatchState.split('win')[0]
-                        }
-                        d = {
-                            seriesid: e.series.id,
-                            matchid: e.id,
-                            status: e.status,
-                            winningTeam: winningTeam
-                        }
-                    }
-                });
-            }
-            callback(d);
-        }
-    });
-}
+// function getAllMatch(matchName, callback){
+//     var options = {
+//         method: 'GET',
+//         url: properties.rapid_api_All_match,
+//         headers: {
+//             'x-rapidapi-host': properties.rapidapi_host,
+//             'x-rapidapi-key': properties.rapidapi_key,
+//             useQueryString: properties.useQueryString
+//         },
+//         json:true
+//     };
+//     Request(options, function (error, response, body) {
+//         if (error) {
+//             console.log(error);
+//         } else {
+//             let d = ''
+//             if (body != undefined) {
+//                 body.matchList.matches.filter(e => {
+//                     if(e.series.name.indexOf(matchName) != -1){
+//                         let winningTeam = '';
+//                         if(e.status == 'COMPLETED'){
+//                             winningTeam = e.currentMatchState.split('win')[0]
+//                         }
+//                         d = {
+//                             seriesid: e.series.id,
+//                             matchid: e.id,
+//                             status: e.status,
+//                             winningTeam: winningTeam
+//                         }
+//                     }
+//                 });
+//             }
+//             callback(d);
+//         }
+//     });
+// }
 
-function getCricektScore (match_id, callback){
-    var options = {
-        method: 'GET',
-        url: properties.rapid_api_cricket_url,
-        qs: match_id,
-        headers: {
-            'x-rapidapi-host': properties.rapidapi_host,
-            'x-rapidapi-key': properties.rapidapi_key,
-            useQueryString: properties.useQueryString
-        },
-        json: true
-    };
+// function getCricektScore (match_id, callback){
+//     var options = {
+//         method: 'GET',
+//         url: properties.rapid_api_cricket_url,
+//         qs: match_id,
+//         headers: {
+//             'x-rapidapi-host': properties.rapidapi_host,
+//             'x-rapidapi-key': properties.rapidapi_key,
+//             useQueryString: properties.useQueryString
+//         },
+//         json: true
+//     };
 
-    Request(options, function (error, response, body) {
-        if (error) {
-            console.log(error);
-        } else {
-            if(body.fullScorecard!= undefined){
-                //console.log(body)
-                callback(body.fullScorecard.innings[0]);
-            }
-            else
-            callback(undefined)
-        }
+//     Request(options, function (error, response, body) {
+//         if (error) {
+//             console.log(error);
+//         } else {
+//             if(body.fullScorecard!= undefined){
+//                 //console.log(body)
+//                 callback(body.fullScorecard.innings[0]);
+//             }
+//             else
+//             callback(undefined)
+//         }
 
 
-    }); 
-}
+//     }); 
+// }
   
   
 // getAllMatch('India v England', function(data) {
@@ -2216,109 +2216,126 @@ function getCricektScore (match_id, callback){
 //     })
 // });
 //DB.scoreCard.findOne({eventId: 0,'batsmen.name':{'$eq':'Rohit Sharma'}}).then(eventData => {console.log(eventData) })
-function updateScoreCard (eventName){
-    getAllMatch(eventName, function(data) {
-        getCricektScore(data, score =>{
-            if(score != undefined){
-                let overSplit = score.over.split('.');
-                if(overSplit[1] == 0){
-                    var Scorequery = {matchName: eventName};
-                    let Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
-                    let options = { upsert: true, new: true, setDefaultsOnInsert: true };
-                    DB.scoreCard.findOne(Scorequery, function(error, resultSet){
-                        if(resultSet != null){
-                            let overWicket = score.wicket - resultSet.wickets;
-                            let overRun = score.run - resultSet.runs;
-                            Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam,overWicket:overWicket, overRun:overRun, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
-                        }
-                        DB.scoreCard.update(Scorequery, Scoreupdate, options, function(error, result) {
-                            if (error)
-                            console.log(error);
-                        });
-                        score.batsmen.map(e => {
-                            let batsmenQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }},
-                            isOut = 'not out';
-                            if (e.howOut != 'not out' && e.howOut != '') {
-                                isOut = 'out' ;
-                            }
-                            let batsmenInsertQuery = {matchName:eventName};
-                            let batsmeninset = {$push:{"batsmen":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut, fallOfWicket: e.fallOfWicket}}};
-                            DB.scoreCard.findOne(batsmenQuery).then(batsmn => {
-                                if (batsmn!= null){
-                                    batsmn.batsmen.map(d => {
-                                        let batmsnQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }};
-                                        let batsmenUpdate = {$set:{"batsmen.$.name": e.name, "batsmen.$.run": e.runs, "batsmen.$.four": e.fours, "batsmen.$.six": e.sixes, "batsmen.$.isOut": isOut, "batsmen.$.fallOfWicket": e.fallOfWicket}};
-                                        DB.scoreCard.updateOne(batmsnQuery, batsmenUpdate, function(error, result) {
-                                            if (error){
-                                                console.log(error)
-                                            };
-                                        });
-                                        if(d.fallOfWicket != null){
-                                            let fwr = d.fallOfWicket.split("-");
-                                            let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
-                                        if (batsmn.fallOfWicket.length <= 0) {
-                                            DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
-                                                if (error)
-                                                console.log(error);
-                                            });
-                                        } else {
-                                            let queryOffwt = {matchName:eventName, "fallOfWicket.wicket": { "$ne": fwr[0] }};
-                                            DB.scoreCard.update(queryOffwt, UpdatedVal, function(error, result) {
-                                                if (error)
-                                                console.log(error);
-                                            });
+// function updateScoreCard (eventName){
+//     getAllMatch(eventName, function(data) {
+//         getCricektScore(data, score =>{
+//             if(score != undefined){
+//                 let overSplit = score.over.split('.');
+//                 if(overSplit[1] == 0){
+//                     var Scorequery = {matchName: eventName};
+//                     let Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                     let options = { upsert: true, new: true, setDefaultsOnInsert: true };
+//                     DB.scoreCard.findOne(Scorequery, function(error, resultSet){
+//                         if(resultSet != null){
+//                             let overWicket = score.wicket - resultSet.wickets;
+//                             let overRun = score.run - resultSet.runs;
+//                             Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam,overWicket:overWicket, overRun:overRun, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                         }
+//                         DB.scoreCard.update(Scorequery, Scoreupdate, options, function(error, result) {
+//                             if (error)
+//                             console.log(error);
+//                         });
+//                         score.batsmen.map(e => {
+//                             let batsmenQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }},
+//                             isOut = 'not out';
+//                             if (e.howOut != 'not out' && e.howOut != '') {
+//                                 isOut = 'out' ;
+//                             }
+//                             let batsmenInsertQuery = {matchName:eventName};
+//                             let batsmeninset = {$push:{"batsmen":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut, fallOfWicket: e.fallOfWicket}}};
+//                             DB.scoreCard.findOne(batsmenQuery).then(batsmn => {
+//                                 if (batsmn!= null){
+//                                     batsmn.batsmen.map(d => {
+//                                         let batmsnQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }};
+//                                         let batsmenUpdate = {$set:{"batsmen.$.name": e.name, "batsmen.$.run": e.runs, "batsmen.$.four": e.fours, "batsmen.$.six": e.sixes, "batsmen.$.isOut": isOut, "batsmen.$.fallOfWicket": e.fallOfWicket}};
+//                                         DB.scoreCard.updateOne(batmsnQuery, batsmenUpdate, function(error, result) {
+//                                             if (error){
+//                                                 console.log(error)
+//                                             };
+//                                         });
+//                                         if(d.fallOfWicket != null){
+//                                             let fwr = d.fallOfWicket.split("-");
+//                                             let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                         if (batsmn.fallOfWicket.length <= 0) {
+//                                             DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                                 if (error)
+//                                                 console.log(error);
+//                                             });
+//                                         } else {
+//                                             let queryOffwt = {matchName:eventName, "fallOfWicket.wicket": { "$ne": fwr[0] }};
+//                                             DB.scoreCard.update(queryOffwt, UpdatedVal, function(error, result) {
+//                                                 if (error)
+//                                                 console.log(error);
+//                                             });
     
-                                        }
-                                    }
-                                    })
+//                                         }
+//                                     }
+//                                     })
     
-                                } else {
-                                    if(e.howOut != 'not out' && e.howOut != ''){
-                                        let fwr = e.fallOfWicket.split("-");
-                                        let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
-                                        DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
-                                            if (error)
-                                            console.log(error);
-                                        });
-                                    }
-                                    DB.scoreCard.update(batsmenInsertQuery, batsmeninset, function(error, result) {
-                                        if (error){
-                                            console.log(error)
-                                        };
-                                    });
-                                }
-                            })
+//                                 } else {
+//                                     if(e.howOut != 'not out' && e.howOut != ''){
+//                                         let fwr = e.fallOfWicket.split("-");
+//                                         let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                         DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                             if (error)
+//                                             console.log(error);
+//                                         });
+//                                     }
+//                                     DB.scoreCard.update(batsmenInsertQuery, batsmeninset, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                 }
+//                             })
                         
-                        });
-                        score.bowlers.map(e => {
-                            let bowlersQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
-                            bowlersInsertQuery = {matchName:eventName},
-                            bowlersInsert = {$push:{"bowlers":[{id: e.id, name: e.name, wickets: e.wickets}]}};
-                            DB.scoreCard.findOne(bowlersQuery).then(bowlersData => {
-                                if (bowlersData!= null){
-                                    bowlersData.bowlers.map(d => {
-                                        let bowlQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
-                                        bowlersUpdateData = {$set:{"bowlers.$.name": e.name, "bowlers.$.wickets": e.wickets}};
-                                        DB.scoreCard.update(bowlQuery, bowlersUpdateData, function(error, result) {
-                                            if (error){
-                                                console.log(error)
-                                            };
-                                        });
-                                    })
+//                         });
+//                         score.bowlers.map(e => {
+//                             let bowlersQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
+//                             bowlersInsertQuery = {matchName:eventName},
+//                             bowlersInsert = {$push:{"bowlers":[{id: e.id, name: e.name, wickets: e.wickets}]}};
+//                             DB.scoreCard.findOne(bowlersQuery).then(bowlersData => {
+//                                 if (bowlersData!= null){
+//                                     bowlersData.bowlers.map(d => {
+//                                         let bowlQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
+//                                         bowlersUpdateData = {$set:{"bowlers.$.name": e.name, "bowlers.$.wickets": e.wickets}};
+//                                         DB.scoreCard.update(bowlQuery, bowlersUpdateData, function(error, result) {
+//                                             if (error){
+//                                                 console.log(error)
+//                                             };
+//                                         });
+//                                     })
     
-                                } else {
-                                    DB.scoreCard.update(bowlersInsertQuery, bowlersInsert, function(error, result) {
-                                        if (error){
-                                            console.log(error)
-                                        };
-                                    });
-                                }
-                            })
-                        });
-                    });
-                }
-            }
+//                                 } else {
+//                                     DB.scoreCard.update(bowlersInsertQuery, bowlersInsert, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                 }
+//                             })
+//                         });
+//                     });
+//                 }
+//             }
             
+//         })
+//     });
+// }
+
+exports.getBettedFancyOdds = async (req, res) => {
+    try {
+        let eventId = req.query.eventId;
+        let type = req.query.type;
+        if(!eventId || !type){
+            return res.send({status: false, message: 'Kindly provide the valid eventId'});
+        }
+        DB.betting.distinct('marketID',{eventID: eventId, settled: {"$ne":'settled'}, marketType:{"$eq":type}}).then(data => {
+            DB.FancyOdds.find({marketId: {"$in":data},"status": "CLOSED"}).then(fancyData => {
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: fancyData});
+            })
         })
-    });
+    } catch (error) {
+        return res.send(error);
+    }
 }

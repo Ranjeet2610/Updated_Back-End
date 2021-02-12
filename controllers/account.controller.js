@@ -1251,386 +1251,603 @@ exports.getUserProfitAndLoss = (req, res) => {
 
 //   bet settle for match odds
 
-exports.BetSettleMatchOdds = (req, res) => {
-    DB.matchOdds.find().then((marketType) => {
-        // console.log(marketType)
-        marketType.map((item, index) => {
-            //  console.log(item.marketId)
-            var marketIds = item.marketId
-            // console.log(marketIds)
+// exports.BetSettleMatchOdds = (req, res) => {
+//     DB.matchOdds.find().then((marketType) => {
+//         // console.log(marketType)
+//         marketType.map((item, index) => {
+//             //  console.log(item.marketId)
+//             var marketIds = item.marketId
+//             // console.log(marketIds)
 
-            if (marketIds) {
-                Request.get({
-                    "headers": { "content-type": "application/json" },
-                    "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
-                    "qs": { "market_id": marketIds }
-                }, (error, response, body) => {
-                    if (error) {
-                        return console.log(error);
+//             if (marketIds) {
+//                 Request.get({
+//                     "headers": { "content-type": "application/json" },
+//                     "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+//                     "qs": { "market_id": marketIds }
+//                 }, (error, response, body) => {
+//                     if (error) {
+//                         return console.log(error);
+//                     }
+//                     const oddsData = JSON.parse(body)
+//                     if ((oddsData[0] !== undefined)) {
+//                         if (oddsData[0].status === "CLOSED") {
+
+//                             // console.log(oddsData[0].runners[0].selectionId,oddsData[0].runners[0].status)
+//                             oddsData[0].runners.map((item1, index) => {
+//                                 // console.log(item1.selectionId,item1.status)
+//                                 if (item1.status === "INACTIVE") {
+//                                     const winnerSelectionId = item1.selectionId
+//                                     //    console.log(item1.selectionId,item1.status,winnerSelectionId )
+
+
+//                                     DB.betting.find({ status: "open", marketID: marketIds }).then((openBets) => {
+
+//                                         openBets.map((item3, index) => {
+
+//                                             // return res.json(openBets)
+
+//                                             if (item3.selectionID === winnerSelectionId && item3.bettype === "Back") {
+//                                                 // profit and update the status settled
+
+
+//                                                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                                                     if (userUpdated) {
+//                                                         // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability)
+//                                                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                                             if (userAccount) {
+//                                                                 var deposit = new DB.deposit({
+//                                                                     userName: userUpdated.userName,
+//                                                                     accountHolderName: userUpdated,
+//                                                                     amount: item3.profit,
+//                                                                     balance: userUpdated.walletBalance
+
+
+//                                                                 })
+
+//                                                                 deposit.save()
+//                                                                 userAccount.depositTransaction.push(deposit)
+//                                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.profit)
+//                                                                 lastDepositDate = new Date()
+//                                                                 userAccount.save()
+//                                                                 userUpdated.save().then((saved) => {
+
+//                                                                     item3.profit = item3.P_L;
+//                                                                     item3.liability = 0;
+//                                                                     item3.status = "settled";
+//                                                                     item3.save()
+
+
+//                                                                 })
+
+//                                                             }
+
+//                                                         })
+//                                                     }
+
+//                                                 })
+
+
+//                                             } else if (item3.selectionID === winnerSelectionId && item3.bettype === "Lay") {
+//                                                 // loss and update the status settled
+
+
+//                                                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                                                     if (userUpdated) {
+//                                                         // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
+//                                                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                                             if (userAccount) {
+//                                                                 var withdraw = new DB.withdraw({
+//                                                                     userName: userUpdated.userName,
+//                                                                     accountHolderName: userUpdated,
+//                                                                     amount: item3.liability,
+//                                                                     balance: userUpdated.walletBalance
+
+//                                                                 })
+
+//                                                                 withdraw.save()
+//                                                                 userAccount.withdrawTransaction.push(withdraw)
+//                                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(req.body.fillAmount)
+//                                                                 userAccount.lastWithdrawDate = new Date()
+//                                                                 userAccount.save()
+//                                                                 userUpdated.save().then((saved) => {
+
+//                                                                     item3.P_L = item3.liability;
+//                                                                     item3.profit = 0;
+//                                                                     item3.status = "settled"
+//                                                                     item3.save()
+
+//                                                                 })
+
+//                                                             }
+//                                                         })
+//                                                     }
+//                                                 })
+
+
+//                                             }
+
+//                                             else if (item3.selectionID !== winnerSelectionId && item3.bettype === "Lay") {
+//                                                 // profit and update the status settled
+
+
+//                                                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                                                     if (userUpdated) {
+//                                                         // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
+//                                                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                                             if (userAccount) {
+//                                                                 var deposit = new DB.deposit({
+//                                                                     userName: userUpdated.userName,
+//                                                                     accountHolderName: userUpdated,
+//                                                                     amount: item3.profit,
+//                                                                     balance: userUpdated.walletBalance
+
+//                                                                 })
+
+//                                                                 deposit.save()
+//                                                                 userAccount.depositTransaction.push(deposit)
+//                                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.profit)
+//                                                                 lastDepositDate = new Date()
+//                                                                 userAccount.save()
+//                                                                 userUpdated.save().then((saved) => {
+//                                                                     item3.profit = item3.P_L;
+//                                                                     item3.P_L = item3.liability;
+//                                                                     item3.liability = 0;
+//                                                                     item3.status = "settled"
+//                                                                     item3.save()
+
+
+//                                                                 })
+
+//                                                             }
+//                                                         })
+//                                                     }
+//                                                 })
+//                                             } else {
+//                                                 // loss and update the status settled and then save it
+//                                                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                                                     if (userUpdated) {
+//                                                         // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
+//                                                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                                             if (userAccount) {
+//                                                                 var withdraw = new DB.withdraw({
+//                                                                     userName: userUpdated.userName,
+//                                                                     accountHolderName: userUpdated,
+//                                                                     amount: item3.liability,
+//                                                                     balance: userUpdated.walletBalance
+
+//                                                                 })
+
+//                                                                 withdraw.save()
+//                                                                 userAccount.withdrawTransaction.push(withdraw)
+//                                                                 userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(req.body.fillAmount)
+//                                                                 userAccount.lastWithdrawDate = new Date()
+//                                                                 userAccount.save()
+//                                                                 userUpdated.save().then((saved) => {
+
+//                                                                     item3.profit = 0;
+//                                                                     item3.status = "settled";
+//                                                                     item3.save()
+
+//                                                                 })
+
+//                                                             }
+
+//                                                         })
+//                                                     }
+//                                                 })
+//                                             }
+
+//                                         })
+
+//                                     })
+
+//                                 }
+
+//                             })
+
+//                         }
+//                     }
+
+//                 })
+
+//             }
+
+//         })
+
+//     })
+
+// }
+
+exports.matchOddsBetSettlement = async (req, res) => {
+    let winnerSelectionId = req.body.selectionId;
+    let marketId = req.body.marketId;
+    if(!winnerSelectionId || !marketId) {
+        res.send({status:false, message:"Kindly share the selectionid or marketId"});
+    }
+    DB.betting.find({ status: "open", marketID: marketId }).then((openBets) => {
+        openBets.map((item3, index) => {
+            if (item3.selectionID == winnerSelectionId && item3.bettype === "Back") {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack) 
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var withdraw = new DB.withdraw({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.liability,
+                                    balance: userUpdated.walletBalance
+
+                                })
+
+                                withdraw.save()
+                                userAccount.withdrawTransaction.push(withdraw)
+                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                userAccount.lastWithdrawDate = new Date()
+                                userAccount.save()
+                                userUpdated.save().then((saved) => {
+
+                                    item3.P_L = item3.liability;
+                                    item3.profit = 0;
+                                    item3.status = "settled"
+                                    item3.save()
+
+                                })
+
+                            }
+                        })
                     }
-                    const oddsData = JSON.parse(body)
-                    if ((oddsData[0] !== undefined)) {
-                        if (oddsData[0].status === "CLOSED") {
-
-                            // console.log(oddsData[0].runners[0].selectionId,oddsData[0].runners[0].status)
-                            oddsData[0].runners.map((item1, index) => {
-                                // console.log(item1.selectionId,item1.status)
-                                if (item1.status === "INACTIVE") {
-                                    const winnerSelectionId = item1.selectionId
-                                    //    console.log(item1.selectionId,item1.status,winnerSelectionId )
-
-
-                                    DB.betting.find({ status: "open", marketID: marketIds }).then((openBets) => {
-
-                                        openBets.map((item3, index) => {
-
-                                            // return res.json(openBets)
-
-                                            if (item3.selectionID === winnerSelectionId && item3.bettype === "Back") {
-                                                // profit and update the status settled
-
-
-                                                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                                                    if (userUpdated) {
-                                                        // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability)
-                                                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                                            if (userAccount) {
-                                                                var deposit = new DB.deposit({
-                                                                    userName: userUpdated.userName,
-                                                                    accountHolderName: userUpdated,
-                                                                    amount: item3.profit,
-                                                                    balance: userUpdated.walletBalance
-
-
-                                                                })
-
-                                                                deposit.save()
-                                                                userAccount.depositTransaction.push(deposit)
-                                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.profit)
-                                                                lastDepositDate = new Date()
-                                                                userAccount.save()
-                                                                userUpdated.save().then((saved) => {
-
-                                                                    item3.profit = item3.P_L;
-                                                                    item3.liability = 0;
-                                                                    item3.status = "settled";
-                                                                    item3.save()
-
-
-                                                                })
-
-                                                            }
-
-                                                        })
-                                                    }
-
-                                                })
-
-
-                                            } else if (item3.selectionID === winnerSelectionId && item3.bettype === "Lay") {
-                                                // loss and update the status settled
-
-
-                                                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                                                    if (userUpdated) {
-                                                        // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
-                                                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                                            if (userAccount) {
-                                                                var withdraw = new DB.withdraw({
-                                                                    userName: userUpdated.userName,
-                                                                    accountHolderName: userUpdated,
-                                                                    amount: item3.liability,
-                                                                    balance: userUpdated.walletBalance
-
-                                                                })
-
-                                                                withdraw.save()
-                                                                userAccount.withdrawTransaction.push(withdraw)
-                                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(req.body.fillAmount)
-                                                                userAccount.lastWithdrawDate = new Date()
-                                                                userAccount.save()
-                                                                userUpdated.save().then((saved) => {
-
-                                                                    item3.P_L = item3.liability;
-                                                                    item3.profit = 0;
-                                                                    item3.status = "settled"
-                                                                    item3.save()
-
-                                                                })
-
-                                                            }
-                                                        })
-                                                    }
-                                                })
-
-
-                                            }
-
-                                            else if (item3.selectionID !== winnerSelectionId && item3.bettype === "Lay") {
-                                                // profit and update the status settled
-
-
-                                                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                                                    if (userUpdated) {
-                                                        // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
-                                                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                                            if (userAccount) {
-                                                                var deposit = new DB.deposit({
-                                                                    userName: userUpdated.userName,
-                                                                    accountHolderName: userUpdated,
-                                                                    amount: item3.profit,
-                                                                    balance: userUpdated.walletBalance
-
-                                                                })
-
-                                                                deposit.save()
-                                                                userAccount.depositTransaction.push(deposit)
-                                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) + parseFloat(item3.profit)
-                                                                lastDepositDate = new Date()
-                                                                userAccount.save()
-                                                                userUpdated.save().then((saved) => {
-                                                                    item3.profit = item3.P_L;
-                                                                    item3.P_L = item3.liability;
-                                                                    item3.liability = 0;
-                                                                    item3.status = "settled"
-                                                                    item3.save()
-
-
-                                                                })
-
-                                                            }
-                                                        })
-                                                    }
-                                                })
-                                            } else {
-                                                // loss and update the status settled and then save it
-                                                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                                                    if (userUpdated) {
-                                                        // userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.liability) 
-                                                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                                            if (userAccount) {
-                                                                var withdraw = new DB.withdraw({
-                                                                    userName: userUpdated.userName,
-                                                                    accountHolderName: userUpdated,
-                                                                    amount: item3.liability,
-                                                                    balance: userUpdated.walletBalance
-
-                                                                })
-
-                                                                withdraw.save()
-                                                                userAccount.withdrawTransaction.push(withdraw)
-                                                                userAccount.walletBalance = parseFloat(userAccount.walletBalance) - parseFloat(req.body.fillAmount)
-                                                                userAccount.lastWithdrawDate = new Date()
-                                                                userAccount.save()
-                                                                userUpdated.save().then((saved) => {
-
-                                                                    item3.profit = 0;
-                                                                    item3.status = "settled";
-                                                                    item3.save()
-
-                                                                })
-
-                                                            }
-
-                                                        })
-                                                    }
-                                                })
-                                            }
-
-                                        })
-
-                                    })
-
-                                }
-
-                            })
-
-                        }
-                    }
-
                 })
+            } else if (item3.selectionID == winnerSelectionId && item3.bettype === "Lay") {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack) 
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var withdraw = new DB.withdraw({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.liability,
+                                    balance: userUpdated.walletBalance
 
+                                })
+
+                                withdraw.save()
+                                userAccount.withdrawTransaction.push(withdraw)
+                                userAccount.lastWithdrawDate = new Date()
+                                userAccount.save()
+                                userUpdated.save().then((saved) => {
+
+                                    item3.P_L = item3.liability;
+                                    item3.profit = 0;
+                                    item3.status = "settled"
+                                    item3.save()
+
+                                })
+
+                            }
+                        })
+                    }
+                })
+            } else if (item3.selectionID != winnerSelectionId && item3.bettype === "Lay") {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack) 
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var deposit = new DB.deposit({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.profit,
+                                    balance: userUpdated.walletBalance
+
+                                })
+
+                                deposit.save()
+                                userAccount.depositTransaction.push(deposit)
+                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                lastDepositDate = new Date()
+                                userAccount.save()
+                                userUpdated.save().then((saved) => {
+                                    item3.profit = item3.P_L;
+                                    item3.P_L = item3.liability;
+                                    item3.liability = 0;
+                                    item3.status = "settled"
+                                    item3.save()
+
+
+                                })
+
+                            }
+                        })
+                    }
+                })
+            } else {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack) 
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var withdraw = new DB.withdraw({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.liability,
+                                    balance: userUpdated.walletBalance
+
+                                })
+
+                                withdraw.save()
+                                userAccount.withdrawTransaction.push(withdraw)
+                                userAccount.lastWithdrawDate = new Date()
+                                userAccount.save()
+                                userUpdated.save().then((saved) => {
+
+                                    item3.profit = 0;
+                                    item3.status = "settled";
+                                    item3.save()
+
+                                })
+
+                            }
+
+                        })
+                    }
+                })
             }
-
         })
-
+        return res.status(200).json({status: true, message: "Match odds has been settled"});
     })
-
 }
+
 // bet settle for fancy odds
 
-exports.BetSettleFancyOdds = (req, res) => {
-    DB.FancyOdds.find({status: "CLOSED"}).then((marketType) => {
-        let marketData = marketType;
-        importFancyOddsData();
-        marketData.map((item, index) => {
-            let odsyTypeData = fancyOddsStringCalc(item.marketName);
-            if(odsyTypeData != 'Manual'){
-                let scoreQuery = {eventId: item.eventId};
-                if (odsyTypeData[0] == 'BOUNDARIES'){
-                    scoreQuery = {eventId: item.eventId, "batsmen.name":{'$eq':odsyTypeData[1]}};
-                } else if (odsyTypeData[0] == 'FALL OF') {
-                    scoreQuery = {eventId: item.eventId, "fallOfWicket.wicket":{'$eq':odsyTypeData[1]}};
-                } else if (odsyTypeData[0] == 'ONLY') {
-                    scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
-                } else if(odsyTypeData[0] == 'OVER RUN') {
-                    scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
-                }
-            DB.betting.find({ status: "open", marketID: item.marketId, selectionID: item.marketId }).then((openBets) => {
-                openBets.map((item3, index) => {
-                    if (item3.bettype === "Back") {
-                        DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                            if (userUpdated) {
-                                DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                    if (userAccount) {
-                                        var deposit = new DB.deposit({
-                                            userName: userUpdated.userName,
-                                            accountHolderName: userUpdated,
-                                            amount: item3.profit,
-                                            balance: userUpdated.walletBalance
-                                            })
+// exports.BetSettleFancyOdds = (req, res) => {
+//     DB.FancyOdds.find({status: "CLOSED"}).then((marketType) => {
+//         let marketData = marketType;
+//         importFancyOddsData();
+//         marketData.map((item, index) => {
+//             let odsyTypeData = fancyOddsStringCalc(item.marketName);
+//             if(odsyTypeData != 'Manual'){
+//                 let scoreQuery = {eventId: item.eventId};
+//                 if (odsyTypeData[0] == 'BOUNDARIES'){
+//                     scoreQuery = {eventId: item.eventId, "batsmen.name":{'$eq':odsyTypeData[1]}};
+//                 } else if (odsyTypeData[0] == 'FALL OF') {
+//                     scoreQuery = {eventId: item.eventId, "fallOfWicket.wicket":{'$eq':odsyTypeData[1]}};
+//                 } else if (odsyTypeData[0] == 'ONLY') {
+//                     scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
+//                 } else if(odsyTypeData[0] == 'OVER RUN') {
+//                     scoreQuery = {eventId: item.eventId, overs: odsyTypeData[1]};
+//                 }
+//             DB.betting.find({ status: "open", marketID: item.marketId, selectionID: item.marketId }).then((openBets) => {
+//                 openBets.map((item3, index) => {
+//                     if (item3.bettype === "Back") {
+//                         DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                             if (userUpdated) {
+//                                 DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                     if (userAccount) {
+//                                         var deposit = new DB.deposit({
+//                                             userName: userUpdated.userName,
+//                                             accountHolderName: userUpdated,
+//                                             amount: item3.profit,
+//                                             balance: userUpdated.walletBalance
+//                                             })
 
-                                            deposit.save()
-                                            userAccount.depositTransaction.push(deposit);
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
-                                            DB.scoreCard.findOne(scoreQuery).then(scoreData => {
-                                                if(scoreData != null){
-                                                    if (odsyTypeData[0] == 'BOUNDARIES'){
-                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
-                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
-                                                                if (item3.odds <= scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    } else if (odsyTypeData[0] == 'FALL OF') {
-                                                        for(var i = 0; i < scoreData.fallOfWicket; i++){
-                                                            if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
-                                                                if (item3.odds <= scoreData.batsmen[i].run) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    } else if (odsyTypeData[0] == 'ONLY') {
-                                                        if(scoreData.overs == odsyTypeData[1]){
-                                                            if (item3.odds <= scoreData.overRun) {
-                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                                            }
-                                                        }
-                                                    } else if(odsyTypeData[0] == 'OVER RUN') {
-                                                        if(scoreData.overs == odsyTypeData[1]){
-                                                            if (item3.odds <= scoreData.runs) {
-                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                                            }
+//                                             deposit.save()
+//                                             userAccount.depositTransaction.push(deposit);
+//                                             userUpdated.exposure = parseFloat(userUpdated.exposure) + parseFloat(item3.stack);
+//                                             DB.scoreCard.findOne(scoreQuery).then(scoreData => {
+//                                                 if(scoreData != null){
+//                                                     if (odsyTypeData[0] == 'BOUNDARIES'){
+//                                                         for(var i = 0; i < scoreData.batsmen.length; i++){
+//                                                             if(scoreData.batsmen[i].name == odsyTypeData[1]){
+//                                                                 if (item3.odds <= scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     } else if (odsyTypeData[0] == 'FALL OF') {
+//                                                         for(var i = 0; i < scoreData.fallOfWicket; i++){
+//                                                             if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
+//                                                                 if (item3.odds <= scoreData.batsmen[i].run) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     } else if (odsyTypeData[0] == 'ONLY') {
+//                                                         if(scoreData.overs == odsyTypeData[1]){
+//                                                             if (item3.odds <= scoreData.overRun) {
+//                                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+//                                                             }
+//                                                         }
+//                                                     } else if(odsyTypeData[0] == 'OVER RUN') {
+//                                                         if(scoreData.overs == odsyTypeData[1]){
+//                                                             if (item3.odds <= scoreData.runs) {
+//                                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+//                                                             }
                                                            
-                                                        }
-                                                    } else if(odsyTypeData[0] == 'RUN'){
-                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
-                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
-                                                                if (item3.odds <= scoreData.batsmen[i].run) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            })
-                                            lastDepositDate = new Date()
-                                            userAccount.save()
-                                            userUpdated.save().then((saved) => {
-                                                item3.profit = item3.P_L;
-                                                item3.liability = 0;
-                                                item3.status = "settled";
-                                                item3.sattlementType = "automatic";
-                                                item3.save()
-                                            })
+//                                                         }
+//                                                     } else if(odsyTypeData[0] == 'RUN'){
+//                                                         for(var i = 0; i < scoreData.batsmen.length; i++){
+//                                                             if(scoreData.batsmen[i].name == odsyTypeData[1]){
+//                                                                 if (item3.odds <= scoreData.batsmen[i].run) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     }
+//                                                 }
+//                                             })
+//                                             lastDepositDate = new Date()
+//                                             userAccount.save()
+//                                             userUpdated.save().then((saved) => {
+//                                                 item3.profit = item3.P_L;
+//                                                 item3.liability = 0;
+//                                                 item3.status = "settled";
+//                                                 item3.sattlementType = "automatic";
+//                                                 item3.save()
+//                                             })
+//                                     }
+//                                 })
+//                             }
+//                         })
+//                     } else if (item3.bettype === "Lay") {
+//                                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+//                                     if (userUpdated) {
+//                                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+//                                             if (userAccount) {
+//                                                 var withdraw = new DB.withdraw({
+//                                                     userName: userUpdated.userName,
+//                                                     accountHolderName: userUpdated,
+//                                                     amount: item3.liability,
+//                                                     balance: userUpdated.walletBalance
+//                                                 })
+
+//                                             withdraw.save()
+//                                             userAccount.withdrawTransaction.push(withdraw)
+//                                             userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
+//                                             DB.scoreCard.findOne(scoreQuery).then(scoreData => {
+//                                                 if(scoreData != null){
+//                                                     if (odsyTypeData[0] == 'BOUNDARIES'){
+//                                                         for(var i = 0; i < scoreData.batsmen.length; i++){
+//                                                             if(scoreData.batsmen[i].name == odsyTypeData[1]){
+//                                                                 if (item3.odds > scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     } else if (odsyTypeData[0] == 'FALL OF') {
+//                                                         for(var i = 0; i < scoreData.fallOfWicket; i++){
+//                                                             if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
+//                                                                 if (item3.odds > scoreData.batsmen[i].run) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     } else if (odsyTypeData[0] == 'ONLY') {
+//                                                         if(scoreData.overs == odsyTypeData[1]){
+//                                                             if (item3.odds > scoreData.overRun) {
+//                                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+//                                                             }
+//                                                         }
+//                                                     } else if(odsyTypeData[0] == 'OVER RUN') {
+//                                                         if(scoreData.overs == odsyTypeData[1]){
+//                                                             if (item3.odds > scoreData.runs) {
+//                                                                 userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+//                                                             }
+//                                                         }
+//                                                     } else if(odsyTypeData[0] == 'RUN'){
+//                                                         for(var i = 0; i < scoreData.batsmen.length; i++){
+//                                                             if(scoreData.batsmen[i].name == odsyTypeData[1]){
+//                                                                 if (item3.odds > scoreData.batsmen[i].run) {
+//                                                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+//                                                                 }
+//                                                                 break;
+//                                                             }
+//                                                         }
+//                                                     }
+//                                                 }
+//                                             })
+//                                             userAccount.lastWithdrawDate = new Date()
+//                                             userAccount.save()
+//                                             userUpdated.save().then((saved) => {
+//                                                 item3.P_L = item3.liability;
+//                                                 item3.profit = 0;
+//                                                 item3.status = "settled"
+//                                                 item3.save()
+//                                             })
+
+//                                         }
+//                                     })
+//                                 }
+//                             })
+//                         } else { }
+//                     })
+//                 })
+//             }
+//             })
+//     })
+// }
+
+
+
+exports.fancyOddsBetSettlement = async (req, res) => {
+    let selectionId = req.body.selectionId;
+    let result = req.body.result;
+    if(!selectionId || !result){
+        res.send({status:false, message:"Kindly share the selectionid or result"});
+    }
+    //importFancyOddsData();
+    DB.betting.find({ status: "open", selectionID: selectionId }).then((openBets) => {
+        openBets.map((item3, index) => {
+            if (item3.bettype === "Back") {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var deposit = new DB.deposit({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.profit,
+                                    balance: userUpdated.walletBalance
+                                })
+                                    deposit.save()
+                                    userAccount.depositTransaction.push(deposit);
+                                    userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.stack);
+                                    if(item3.odds > result) {
+                                        userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.P_L)+ parseFloat(item3.stack);
                                     }
+                                    
+                                    lastDepositDate = new Date()
+                                    userAccount.save()
+                                    userUpdated.save().then((saved) => {
+                                        item3.profit = item3.P_L;
+                                        item3.liability = 0;
+                                        item3.status = "settled";
+                                        item3.save()
+                                    })
+                            }
+                        })
+                    }
+                })
+            } else if (item3.bettype === "Lay") {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    if (userUpdated) {
+                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                            if (userAccount) {
+                                var withdraw = new DB.withdraw({
+                                    userName: userUpdated.userName,
+                                    accountHolderName: userUpdated,
+                                    amount: item3.liability,
+                                    balance: userUpdated.walletBalance
+                                })
+                                withdraw.save()
+                                userAccount.withdrawTransaction.push(withdraw)
+                                userUpdated.exposure = parseFloat(userUpdated.exposure) - parseFloat(item3.stack);
+                                if(item3.odds > result) {
+                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
+                                }
+                                userAccount.lastWithdrawDate = new Date()
+                                userAccount.save()
+                                userUpdated.save().then((saved) => {
+                                    item3.P_L = item3.liability;
+                                    item3.profit = 0;
+                                    item3.status = "settled"
+                                    item3.save()
                                 })
                             }
                         })
-                    } else if (item3.bettype === "Lay") {
-                                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: -item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
-                                    if (userUpdated) {
-                                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                            if (userAccount) {
-                                                var withdraw = new DB.withdraw({
-                                                    userName: userUpdated.userName,
-                                                    accountHolderName: userUpdated,
-                                                    amount: item3.liability,
-                                                    balance: userUpdated.walletBalance
-                                                })
-
-                                            withdraw.save()
-                                            userAccount.withdrawTransaction.push(withdraw)
-                                            userUpdated.exposure = parseFloat(userUpdated.exposure)+ parseFloat(item3.stack);
-                                            DB.scoreCard.findOne(scoreQuery).then(scoreData => {
-                                                if(scoreData != null){
-                                                    if (odsyTypeData[0] == 'BOUNDARIES'){
-                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
-                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
-                                                                if (item3.odds > scoreData.batsmen[i].four + scoreData.batsmen[i].six) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    } else if (odsyTypeData[0] == 'FALL OF') {
-                                                        for(var i = 0; i < scoreData.fallOfWicket; i++){
-                                                            if(scoreData.fallOfWicket[i].wicket == odsyTypeData[1]){
-                                                                if (item3.odds > scoreData.batsmen[i].run) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    } else if (odsyTypeData[0] == 'ONLY') {
-                                                        if(scoreData.overs == odsyTypeData[1]){
-                                                            if (item3.odds > scoreData.overRun) {
-                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                                            }
-                                                        }
-                                                    } else if(odsyTypeData[0] == 'OVER RUN') {
-                                                        if(scoreData.overs == odsyTypeData[1]){
-                                                            if (item3.odds > scoreData.runs) {
-                                                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                                            }
-                                                        }
-                                                    } else if(odsyTypeData[0] == 'RUN'){
-                                                        for(var i = 0; i < scoreData.batsmen.length; i++){
-                                                            if(scoreData.batsmen[i].name == odsyTypeData[1]){
-                                                                if (item3.odds > scoreData.batsmen[i].run) {
-                                                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)+ parseFloat(item3.stack);
-                                                                }
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            })
-                                            userAccount.lastWithdrawDate = new Date()
-                                            userAccount.save()
-                                            userUpdated.save().then((saved) => {
-                                                item3.P_L = item3.liability;
-                                                item3.profit = 0;
-                                                item3.status = "settled"
-                                                item3.save()
-                                            })
-
-                                        }
-                                    })
-                                }
-                            })
-                        } else { }
-                    })
+                    }
                 })
             }
-            })
+        })
+        return res.status(200).json({status: true, message: "Fancy odds has been settled"});
     })
 }
-
 
 // user section profit and loss
 
@@ -2582,20 +2799,20 @@ exports.getTotalExposure = (req, res) => {
 
 }
 
-function importFancyOddsData () {
-    setTimeout(function(){
-        Request.get({
-        "headers": {"content-type": "application/json" },
-        "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
-        }, (error,response,body) => {
-            if(error) {
-                return console.log(error);
-            }
-            console.log("Import data again");
+// function importFancyOddsData () {
+//     setTimeout(function(){
+//         Request.get({
+//         "headers": {"content-type": "application/json" },
+//         "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
+//         }, (error,response,body) => {
+//             if(error) {
+//                 return console.log(error);
+//             }
+//             console.log("Import data again");
     
-        })
-    }, 60000);
-}
+//         })
+//     }, 60000);
+// }
 // R SHARMA BOUNDARIES 2 done
 // S GILL RUN 2 done
 // FALL OF 1ST WKT IND 2 done
@@ -2604,23 +2821,23 @@ function importFancyOddsData () {
 // S GILL BOUNDARIES 2 done
 // 15 OVER RUN
 
-function fancyOddsStringCalc(stringData){
-    if (stringData.includes('BOUNDARIES')) {
-        let playerName = stringData.split('BOUNDARIES')[0];
-        return ['BOUNDARIES', playerName];
-    } else if (stringData.includes('RUN') && !stringData.includes('INN') && !stringData.includes('OVER')) {
-        let playerName = stringData.split('RUN')[0]
-        return ['RUN', playerName];
-    } else if(stringData.includes('FALL OF')){
-        let d = stringData.split('FALL OF')[1][1];
-        return ['FALL OF', d];
-    } else if (stringData.includes('RUN') && stringData.includes('ONLY') && stringData.includes('OVER')){
-        let d = stringData.split('ONLY')[1].split(" ")[1];
-        return ['ONLY',d];
-    } else if (stringData.includes('RUN') && !stringData.includes('ONLY') && stringData.includes('OVER')){
-        let d = stringData.split('OVER RUN')[0];
-        return ['OVER RUN', d];
-    } else{
-        return 'Manual';
-    }
-}
+// function fancyOddsStringCalc(stringData){
+//     if (stringData.includes('BOUNDARIES')) {
+//         let playerName = stringData.split('BOUNDARIES')[0];
+//         return ['BOUNDARIES', playerName];
+//     } else if (stringData.includes('RUN') && !stringData.includes('INN') && !stringData.includes('OVER')) {
+//         let playerName = stringData.split('RUN')[0]
+//         return ['RUN', playerName];
+//     } else if(stringData.includes('FALL OF')){
+//         let d = stringData.split('FALL OF')[1][1];
+//         return ['FALL OF', d];
+//     } else if (stringData.includes('RUN') && stringData.includes('ONLY') && stringData.includes('OVER')){
+//         let d = stringData.split('ONLY')[1].split(" ")[1];
+//         return ['ONLY',d];
+//     } else if (stringData.includes('RUN') && !stringData.includes('ONLY') && stringData.includes('OVER')){
+//         let d = stringData.split('OVER RUN')[0];
+//         return ['OVER RUN', d];
+//     } else{
+//         return 'Manual';
+//     }
+// }
