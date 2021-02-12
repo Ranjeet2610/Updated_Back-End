@@ -2060,20 +2060,22 @@ function getAllMatch(matchName, callback){
             console.log(error);
         } else {
             let d = ''
-            body.matchList.matches.filter(e => {
-                if(e.series.name.indexOf(matchName) != -1){
-                    let winningTeam = '';
-                    if(e.status == 'COMPLETED'){
-                        winningTeam = e.currentMatchState.split('win')[0]
+            if (body != undefined) {
+                body.matchList.matches.filter(e => {
+                    if(e.series.name.indexOf(matchName) != -1){
+                        let winningTeam = '';
+                        if(e.status == 'COMPLETED'){
+                            winningTeam = e.currentMatchState.split('win')[0]
+                        }
+                        d = {
+                            seriesid: e.series.id,
+                            matchid: e.id,
+                            status: e.status,
+                            winningTeam: winningTeam
+                        }
                     }
-                    d = {
-                        seriesid: e.series.id,
-                        matchid: e.id,
-                        status: e.status,
-                        winningTeam: winningTeam
-                    }
-                }
-            });
+                });
+            }
             callback(d);
         }
     });
