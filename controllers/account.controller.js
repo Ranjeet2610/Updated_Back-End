@@ -1460,13 +1460,14 @@ exports.getUserProfitAndLoss = (req, res) => {
 
 exports.matchOddsBetSettlement = async (req, res) => {
     let winnerSelectionId = req.body.selectionId;
+    let winnerTeam = req.body.winnerTeam;
     let _eventId = req.body.eventId;
     let marketId = req.body.marketId;
     if(!winnerSelectionId || !marketId) {
         res.send({status:false, message:"Kindly share the selectionid or marketId"});
     }
     let settleQuery = {eventId: _eventId};
-    let updatedvals = {$set: {settledValue: winnerSelectionId, settlementStatus: 'settled'}};
+    let updatedvals = {$set: {settledValue: winnerSelectionId, settlementStatus: 'settled', winnerTeam: winnerTeam}};
     DB.event.updateOne(settleQuery, updatedvals).then(data => {
     });
     DB.betting.find({ status: "open", marketID: marketId }).then((openBets) => {

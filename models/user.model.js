@@ -161,7 +161,8 @@ var eventSchema = new mongoose.Schema({
   active:{type:Boolean,default:false},
   eventType:{type: Number, default: 4},
   settlementStatus: {type:String, defualt:'open'},
-  settledValue: {type:String, defualt: 0}
+  settledValue: {type:String, defualt: 0},
+  winnerTeam: {type:String, defualt: ''},
 
 })
 
