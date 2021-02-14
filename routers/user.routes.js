@@ -22,16 +22,16 @@ module.exports = function(router) {
     router.post('/getMasterClosedUsers',Token.checkToken, Auth.getMasterClosedUsers);
     router.post('/lockMatchOdds',Token.checkToken, Auth.lockMatchOdds);
     router.post('/enableFancyOdds',Token.checkToken, Auth.enableFancyOdds);
-    router.post('/visibleFancyOdds', Auth.visibleFancyOdds);
-    router.post('/visibleFancyRunners', Auth.visibleFancyRunners);
+    router.post('/visibleFancyOdds',Token.checkToken, Auth.visibleFancyOdds);
+    router.post('/visibleFancyRunners',Token.checkToken, Auth.visibleFancyRunners);
     router.post('/adminUpDown',Token.checkToken, Auth.adminUpDown);
     router.post('/superAdminUpDown',Token.checkToken, Auth.superAdminUpDown);
     router.post('/userPL',Token.checkToken, Auth.userPL);
     router.post('/adminUserPL',Token.checkToken, Auth.adminUserPL);
-    router.post('/superAdminUserPL',Token.checkToken, Auth.superAdminUserPL);
-    router.post('/updateExposure', Account.updateExposure);
-    router.post('/getEventExposure', Account.getEventExposure);
-    router.post('/getTotalExposure', Account.getTotalExposure);
+    router.post('/superAdminUserPL',Token.checkToken,Token.checkToken, Auth.superAdminUserPL);
+    router.post('/updateExposure',Token.checkToken, Account.updateExposure);
+    router.post('/getEventExposure',Token.checkToken, Account.getEventExposure);
+    router.post('/getTotalExposure',Token.checkToken, Account.getTotalExposure);
 
     
 
@@ -57,13 +57,13 @@ module.exports = function(router) {
     //defined routing for third party customized Api
     router.post('/getLiveSports',Token.checkToken, Auth.getLiveSports);
     router.get('/getLiveCompetitions/:id',Token.checkToken, Auth.getLiveCompetitions);
-    router.post('/getLiveEvents', Auth.getLiveEvents);
-    router.post('/listMarketOdds', Auth.listMarketOdds);
-    router.post('/listMarketType', Auth.listMarketType);
+    router.post('/getLiveEvents', Token.checkToken, Auth.getLiveEvents);
+    router.post('/listMarketOdds', Token.checkToken, Auth.listMarketOdds);
+    router.post('/listMarketType', Token.checkToken, Auth.listMarketType);
 
     //defined routing for database store Api
-    router.post('/storeLiveEvents',Auth.storeLiveEvents);
-    router.post('/storeMarketType', Auth.storeMarketType);
+    router.post('/storeLiveEvents',Token.checkToken,Auth.storeLiveEvents);
+    router.post('/storeMarketType',Token.checkToken, Auth.storeMarketType);
     router.post('/ActiveLiveEvents',Token.checkToken, Auth.ActiveLiveEvents);
     router.get('/LiveEventsForUser',Token.checkToken, Auth.LiveEventsForUser);
     router.post('/getDbliveEvents',Token.checkToken, Auth.getDbliveEvents);
@@ -88,19 +88,19 @@ module.exports = function(router) {
     
     
     router.post('/updateUserSportsInfo',Token.checkToken, Auth.updateUserSportsInfo);
-    router.post('/updateUserChipsInfo', Auth.updateUserChipsInfo);
+    router.post('/updateUserChipsInfo',Token.checkToken, Auth.updateUserChipsInfo);
     router.post('/userSportsInfo',Token.checkToken, Auth.userSportsInfo);
-    router.post('/userChipsInfo', Auth.userChipsInfo);
+    router.post('/userChipsInfo',Token.checkToken, Auth.userChipsInfo);
     
     router.post('/getMyprofile',Token.checkToken, Auth.getMyprofile);
     router.post('/updateMyprofile',Token.checkToken, Auth.updateMyprofile);
-    router.post('/getUserOpenBetHistory', Account.getUserOpenBetHistory);
-    router.post('/getUserOpenfancyBetHistory', Account.getUserOpenfancyBetHistory);
-    router.post('/getUserOpenfancyBetHistoryfront', Account.getUserOpenfancyBetHistoryfront);
+    router.post('/getUserOpenBetHistory',Token.checkToken, Account.getUserOpenBetHistory);
+    router.post('/getUserOpenfancyBetHistory',Token.checkToken, Account.getUserOpenfancyBetHistory);
+    router.post('/getUserOpenfancyBetHistoryfront',Token.checkToken, Account.getUserOpenfancyBetHistoryfront);
     
-    router.post('/getMasterSectionOpenBetHistory', Account.getMasterSectionOpenBetHistory);
-    router.post('/getAdminSectionOpenBetHistory', Account.getAdminSectionOpenBetHistory);
-    router.post('/getSuperAdminSectionOpenBetHistory', Account.getSuperAdminSectionOpenBetHistory);
+    router.post('/getMasterSectionOpenBetHistory',Token.checkToken, Account.getMasterSectionOpenBetHistory);
+    router.post('/getAdminSectionOpenBetHistory',Token.checkToken, Account.getAdminSectionOpenBetHistory);
+    router.post('/getSuperAdminSectionOpenBetHistory', Token.checkToken,  Account.getSuperAdminSectionOpenBetHistory);
 
 
     
@@ -123,10 +123,10 @@ module.exports = function(router) {
 
     router.post('/adminProfitAndLoss',Token.checkToken, Account.adminProfitAndLoss);
     router.post('/superAdminProfitAndLoss',Token.checkToken, Account.superAdminProfitAndLoss);
-    router.post('/masterProfitAndLoss', Account.masterProfitAndLoss);
-    router.post('/chipSettlementForUser', Account.chipSettlementForUser);
-    router.post('/chipSettlementForMaster',Account.chipSettlementForMaster);
-    router.post('/chipSettlementForAdmin', Account.chipSettlementForAdmin);
+    router.post('/masterProfitAndLoss',Token.checkToken, Account.masterProfitAndLoss);
+    router.post('/chipSettlementForUser',Token.checkToken, Account.chipSettlementForUser);
+    router.post('/chipSettlementForMaster', Token.checkToken,Account.chipSettlementForMaster);
+    router.post('/chipSettlementForAdmin',Token.checkToken, Account.chipSettlementForAdmin);
 
     router.post('/getUserDetailsByEmail',Token.checkToken,Auth.getUserDetailsByEmail)
 
@@ -137,7 +137,7 @@ module.exports = function(router) {
     router.delete('/news/:id',Token.checkToken, Auth.deleteNews);
 
     //code for news added by shreesh
-    router.get('/liveCricketScore', Auth.getLiveCricketScore);
+    router.get('/liveCricketScore',Token.checkToken, Auth.getLiveCricketScore);
 
     router.patch('/adminWalletBalance',Token.checkToken, Auth.updateAdminWalletbalance);
 
@@ -149,8 +149,10 @@ module.exports = function(router) {
     router.patch('/suspendOrIsBallRunningFancyOdds', Token.checkToken, Auth.suspendOrIsBallRunningFancyOdds);
     router.put('/allsuspendAndIsballrunning', Token.checkToken, Auth.allsuspendAndIsballrunning);
     router.get('/storeFancyOddsCron', Auth.storeFancyOddsCron);
-    router.post('/matchOddsBetSettlement', Account.matchOddsBetSettlement);
-    router.post('/fancyOddsBetSettlement', Account.fancyOddsBetSettlement);
-    router.get('/getBettedFancyOdds', Auth.getBettedFancyOdds);
-
+    router.post('/matchOddsBetSettlement',Token.checkToken, Account.matchOddsBetSettlement);
+    router.post('/fancyOddsBetSettlement',Token.checkToken, Account.fancyOddsBetSettlement);
+    router.get('/getBettedFancyOdds',Token.checkToken, Auth.getBettedFancyOdds);
+    router.get('/getuserbasedOnAdmin',Token.checkToken, Auth.getuserbasedOnAdmin);
+    router.delete('/dumpNonBettingFancy', Auth.dumpNonBettingFancy);
+    router.get('/getUserInfo',Token.checkToken, Auth.getUserInfo);
     }

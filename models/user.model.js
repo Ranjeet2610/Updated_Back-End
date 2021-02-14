@@ -29,7 +29,8 @@ var userSchema = new mongoose.Schema({
   ongoingCasinoGame:{type: mongoose.Schema.Types.ObjectId, ref: 'Casino'},
   completedCasinoGame:[{type: mongoose.Schema.Types.ObjectId, ref: 'Casino'}],
   winCasinoGame:[{type: mongoose.Schema.Types.ObjectId, ref: 'Casino'}],
-  account:{type: mongoose.Schema.Types.ObjectId, ref: 'account'}
+  account:{type: mongoose.Schema.Types.ObjectId, ref: 'account'},
+  token: {type: String,default: ''}
 })
 
 
@@ -158,7 +159,9 @@ var eventSchema = new mongoose.Schema({
   eventName:{type:String,unique:false},
   OpenDate:{type:String,unique:false},
   active:{type:Boolean,default:false},
-  eventType:{type: Number, default: 4}
+  eventType:{type: Number, default: 4},
+  settlementStatus: {type:String, defualt:'open'},
+  settledValue: {type:String, defualt: 0}
 
 })
 
@@ -190,7 +193,9 @@ var FancyOddSchema = new mongoose.Schema({
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false},
   active:{type:Boolean,default:true},
-  status: {type: String, default:''}
+  status: {type: String, default:''},
+  settlementStatus: {type:String, defualt:'open'},
+  settledValue: {type:String, defualt: 0}
 
 })
 

@@ -10,7 +10,7 @@ var properties = require('../config/config');
 
 // var Request = require("request");
 var randtoken = require('rand-token') 
-var refreshTokens = {} 
+var refreshTokens = {}
 // var DB = require('../db/user')
 
 const { hashSync, genSaltSync, compareSync } = require("bcryptjs");
@@ -133,14 +133,19 @@ if(result){
         expiresIn: "1h"
     });
     refreshTokens[refreshToken] = data.userName; 
-    return res.json({
-          success: 1,
-          message :"login successfully",
-          token: jsontoken,
-          refreshToken: refreshToken,
-          data:data
-
+    let query = {userName:body.userName};
+    let updatedToken = {$set:{token:jsontoken}};
+    DB.user.updateOne(query, updatedToken).then((result)=>{
+        return res.json({
+            success: 1,
+            message :"login successfully",
+            token: jsontoken,
+            refreshToken: refreshToken,
+            data:data
+  
+      });
     });
+    
 } else {
     return res.json({
         success: 0,
@@ -660,7 +665,7 @@ exports.fancyMarketTypeData= async (req,res) =>{
         });
     });
        
-    await DB.FancyOdds.find({eventId:req.body.eventId, isVisible: true, status: {$ne: "CLOSED"}}).then((marketType)=>{
+    await DB.FancyOdds.find({eventId:req.body.eventId, status: {$ne: "CLOSED"}}).then((marketType)=>{
     var datafancy = marketType.map(async(item)=>{
         let fobject= {};
         runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
@@ -2003,33 +2008,31 @@ exports.adminUserPL = async (req,res) =>{
     
     
 
-    async function getEventID(EventTypeID) {
-        let compsData = await getCompitions(EventTypeID);
-        let eventID = [];
-        for(let i=0;i<compsData.length;i++){
+async function getEventID(EventTypeID) {
+    let compsData = await getCompitions(EventTypeID);
+    let eventID = [];
+    for(let i=0;i<compsData.length;i++){
         let compID = compsData[i].competition.id;
         let dts =await dataSet(EventTypeID, compID);
         eventID.push(...dts);
         if(i == compsData.length-1){
         return eventID;
         }
-
-        }
-   }
-
-    async function getCompitions(EventTypeID){
-            let options = {
-                "headers": { "content-type": "application/json" },
-                "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
-                "qs": {"EventTypeID": EventTypeID},
-                json: true
-
-            };
-             return rps(options).then(body => {
-               return body;
-        });
-
     }
+}
+
+async function getCompitions(EventTypeID){
+        let options = {
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
+            "qs": {"EventTypeID": EventTypeID},
+            json: true
+        };
+         return rps(options).then(body => {
+           return body;
+    });
+}
+
 async function dataSet(EventTypeID, compID){
     let options = {"headers": { "content-type": "application/json" },
     "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
@@ -2334,6 +2337,53 @@ exports.getBettedFancyOdds = async (req, res) => {
             DB.FancyOdds.find({marketId: {"$in":data},"status": "CLOSED"}).then(fancyData => {
                 return res.send({status: 200, message:'Fancy list has been fatched in data', data: fancyData});
             })
+        })
+    } catch (error) {
+        return res.send(error);
+    }
+}
+
+exports.getuserbasedOnAdmin = async (req, res) => {
+    try {
+        let adminUserName = req.query.userName;
+        if(!adminUserName) {
+            return res.send({status: false, message: 'Kindly provide the name'});
+        }
+        DB.user.distinct('userName',{admin: adminUserName}).then(data => {
+            DB.user.find({master: {'$in': data}}).then (userData =>{
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: userData});
+            });
+        });
+    } catch (error) {
+        return res.send(error);
+    }
+    
+}
+
+exports.dumpNonBettingFancy = async (req, res) => {
+    try {
+        DB.betting.distinct('selectionID', {marketType: {'$eq': 'Fancy'}}).then(data => {
+            DB.FancyOdds.distinct('marketId',{marketId: {'$nin': data}}).then(userData => {
+                DB.FancyOdds.deleteMany({marketId: {'$in': userData}, status: 'CLOSED'}).then(result => {
+                    return res.send({status: 200});
+                })
+            })
+        })
+    } catch (error) {
+        return res.send(error);
+    }
+    
+}
+exports.getUserInfo = async (req, res) => {
+    try {
+        let userName = req.query.userName;
+        DB.user.findOne({userName: userName}, {walletBalance:1, exposure: 1, userName: 1}).then(user =>{
+            if(user != null){
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: user});
+            }
+            else{
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: []});
+            }
         })
     } catch (error) {
         return res.send(error);
