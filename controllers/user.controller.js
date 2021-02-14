@@ -360,7 +360,7 @@ exports.closeUser = (req,res)=>{
             }
         })
     } catch (error) {
-       return  res.send({status:false, message:"Technical Error"})
+       return res.send({status:false, message:"Technical Error"})
 
     }
 }
@@ -2339,7 +2339,7 @@ exports.getBettedFancyOdds = async (req, res) => {
             })
         })
     } catch (error) {
-        return res.send(error);
+        return res.send({status:false, message:"Technical Error"});
     }
 }
 
@@ -2355,7 +2355,7 @@ exports.getuserbasedOnAdmin = async (req, res) => {
             });
         });
     } catch (error) {
-        return res.send(error);
+        return res.send({status:false, message:"Technical Error"});
     }
     
 }
@@ -2370,7 +2370,7 @@ exports.dumpNonBettingFancy = async (req, res) => {
             })
         })
     } catch (error) {
-        return res.send(error);
+        return res.send({status:false, message:"Technical Error"});
     }
     
 }
@@ -2386,6 +2386,6 @@ exports.getUserInfo = async (req, res) => {
             }
         })
     } catch (error) {
-        return res.send(error);
+        return res.send({status:false, message:"Technical Error"});
     }
 }
