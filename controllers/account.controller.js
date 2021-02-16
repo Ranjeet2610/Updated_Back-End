@@ -864,7 +864,7 @@ exports.getSuperAdminSectionOpenBetHistory = async (req, res) => {
             var mergedData = [].concat.apply([], Data);
             mergedData.map((item, index) => {
                 // add sports id
-                cricketData.push(DB.betting.find({ clientName: item.userName, status: Betstatus }));
+                cricketData.push(DB.betting.find({ clientName: item.userName}));
                 // cricketData.push(DB.betting.find({clientName:item.userName,status:"settled",marketType:"Fancy"}));
             })
 

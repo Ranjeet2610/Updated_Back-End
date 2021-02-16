@@ -115,7 +115,12 @@ if(req.body.userName == null || req.body.userName == undefined || req.body.passw
 exports.login= function(req,res,next){
     const body = req.body;
 Utils.getUserDetailsByEmail(body.userName).then(data=>{
-
+if (data == null) {
+    return res.json({
+        success: 0,
+        data :"This user does not exist"
+    });
+}
 if(data.blocked==true){
 
 return res.json({ success:false,message :"user is blocked"})
