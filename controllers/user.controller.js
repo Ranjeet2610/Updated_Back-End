@@ -1780,6 +1780,7 @@ exports.adminUserPL = async (req,res) =>{
             }
             
             DB.betting.aggregate([
+                { $sort : { createdDate : -1 } },
                 { 
                     "$match": { "eventID": parseInt(eventID) } 
                 },

@@ -1889,10 +1889,10 @@ exports.fancyOddsBetSettlement = async (req, res) => {
 exports.getUserSectionProfitAndLoss = async (req, res) => {
 
     try {
-        let D1 = new Date(req.body.date1);
-        let D2 = new Date(req.body.date2);
+        //let D1 = new Date(req.body.date1);
+        //let D2 = new Date(req.body.date2);
 
-        let unique = await Utils.uniqueEventsID(req.body.userName, D1, D2);
+        //let unique = await Utils.uniqueEventsID(req.body.userName, D1, D2);
 
 
         let bettingData = [];
@@ -1900,32 +1900,32 @@ exports.getUserSectionProfitAndLoss = async (req, res) => {
 
 
 
-        unique.magetUserProfitAndLoss((item, index) => {
-            dataArray.push(DB.betting.find({ clientName: req.body.userName, eventID: item, status: "settled" }));
-        })
+        //unique.magetUserProfitAndLoss((item, index) => {
+        dataArray.push(DB.betting.find({ clientName: req.body.userName, status: "settled" }));
+        //})
 
 
         Promise.all(dataArray).then(data => {
             //  console.log(data)
             // var mergedData = [].concat.apply([], data);
             // console.log(data)
-            finalProfitLoss = data.map((item, index) => {
-                var ProfitLossdata = item.filter((childitem) => {
-                    let D3 = new Date(childitem.createdAt);
-                    if (D3.getTime() <= D2.getTime() && D3.getTime() >= D1.getTime()) {
-                        return childitem
-                    }
+            // let finalProfitLoss = data.map((item, index) => {
+            //     var ProfitLossdata = item.filter((childitem) => {
+            //         let D3 = new Date(childitem.createdAt);
+            //         if (D3.getDate() <= D2.getDate() && D3.getDate() >= D1.getDate()) {
+            //             return childitem
+            //         }
 
-                })
+            //     })
 
-                return ProfitLossdata
-            })
+            //     return ProfitLossdata
+            // })
 
 
 
             // console.log(finalProfitLoss)
             let finalobj = [];
-            let pp = finalProfitLoss.map((item) => {
+            let pp = data.map((item) => {
                 let obj = {};
                 var profit1 = 0;
                 var loss = 0;
