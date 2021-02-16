@@ -701,7 +701,7 @@ exports.getUserOpenBetHistory = async (req, res) => {
         eventid = req.body.eventId
 
         if (eventid) {
-            await DB.betting.find({ clientName: username, eventID: eventid, status: "open" }).then((betdata) => {
+            await DB.betting.find({ clientName: username, eventID: eventid}).then((betdata) => {
                 if (betdata) {
 
                     return res.send({ status: true, message: "", data: betdata })
@@ -712,7 +712,7 @@ exports.getUserOpenBetHistory = async (req, res) => {
         }
         else {
 
-            await DB.betting.find({ clientName: username, status: "open" }).then((betdata) => {
+            await DB.betting.find({ clientName: username}).then((betdata) => {
                 if (betdata) {
 
                     return res.send({ status: true, message: "", data: betdata })
@@ -730,6 +730,8 @@ exports.getUserOpenBetHistory = async (req, res) => {
 
     }
 }
+
+
 
 //   get master section open bet history
 
@@ -1490,9 +1492,6 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.lastWithdrawDate = new Date()
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
-
-                                    item3.P_L = item3.liability;
-                                    item3.profit = 0;
                                     item3.status = "settled"
                                     item3.save()
 
@@ -1520,9 +1519,6 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.lastWithdrawDate = new Date()
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
-
-                                    item3.P_L = item3.liability;
-                                    item3.profit = 0;
                                     item3.status = "settled"
                                     item3.save()
 
@@ -1551,9 +1547,6 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 lastDepositDate = new Date()
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
-                                    item3.profit = item3.P_L;
-                                    item3.P_L = item3.liability;
-                                    item3.liability = 0;
                                     item3.status = "settled"
                                     item3.save()
 
@@ -1582,8 +1575,6 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.lastWithdrawDate = new Date()
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
-
-                                    item3.profit = 0;
                                     item3.status = "settled";
                                     item3.save()
 
@@ -1807,8 +1798,6 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                         lastDepositDate = new Date()
                                         userAccount.save()
                                         userUpdated.save().then((saved) => {
-                                            item3.profit = item3.P_L;
-                                            item3.liability = 0;
                                             item3.status = "settled";
                                             item3.save()
                                         })
@@ -1832,7 +1821,6 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                         lastDepositDate = new Date()
                                         userAccount.save()
                                         userUpdated.save().then((saved) => {
-                                            item3.profit = 0;
                                             item3.status = "settled";
                                             item3.save()
                                         })
@@ -1859,9 +1847,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     userAccount.lastWithdrawDate = new Date()
                                     userAccount.save()
                                     userUpdated.save().then((saved) => {
-                                        item3.profit = item3.P_L;
-                                        item3.P_L = item3.liability;
-                                        item3.liability = 0;
+                                        item3.status = "settled";
                                         item3.save()
                                     })
                                 }
@@ -1884,7 +1870,6 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     userAccount.lastWithdrawDate = new Date()
                                     userAccount.save()
                                     userUpdated.save().then((saved) => {
-                                        item3.profit = 0;
                                         item3.status = "settled"
                                         item3.save()
                                     })
