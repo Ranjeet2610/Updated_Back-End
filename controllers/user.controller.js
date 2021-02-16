@@ -2395,3 +2395,16 @@ exports.getUserInfo = async (req, res) => {
         return res.send({status:false, message:"Technical Error"});
     }
 }
+exports.addbetplacetime = async (req, res) => {
+    try {
+        let gameId = req.body.gameId;
+        let timeDuration = req.body.timeDuration;
+        let query = {gameId:gameId};
+        let updatedVal = {$set: {gameId:gameId, timeDuration: timeDuration}}
+        DB.betPlaceTime.update(query,updatedVal, { upsert: true }).then(data =>{
+            return res.send({status: 200, message:'Bet time has been updated successfully'});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}

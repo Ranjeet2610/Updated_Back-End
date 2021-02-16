@@ -155,4 +155,5 @@ module.exports = function(router) {
     router.get('/getuserbasedOnAdmin',Token.checkToken, Auth.getuserbasedOnAdmin);
     router.delete('/dumpNonBettingFancy', Auth.dumpNonBettingFancy);
     router.get('/getUserInfo',Token.checkToken, Auth.getUserInfo);
+    router.post('/addbetplacetime', Token.checkToken, Auth.addbetplacetime);
     }

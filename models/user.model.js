@@ -306,6 +306,11 @@ let fancyData = new mongoose.Schema({
   active:{type:Boolean,default:true},
   status: {type: String, default:''}
 });
+
+let betPlacetime = new mongoose.Schema({
+  gameId: {type:Number,default:0},
+  timeDuration:{type:Number,default:0}
+})
 const user = mongoose.model('user',userSchema)
 const account = mongoose.model('account',accountSchema)
 const deposit = mongoose.model('deposit',depositSchema)
@@ -323,6 +328,7 @@ const exposureInfo= mongoose.model('exposureInfo',exposureInfoSchema)
 const fancyScemaa = mongoose.model('fancyData', fancyData);
 const news= mongoose.model('news', newsSchema);
 const scoreCard = mongoose.model("score", score);
+const betPlaceTime = mongoose.model("betPlacetime", betPlacetime);
 
 
 
@@ -331,4 +337,5 @@ const scoreCard = mongoose.model("score", score);
 
 
 
-module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard}
+
+module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard, betPlaceTime}
