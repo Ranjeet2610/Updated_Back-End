@@ -2408,3 +2408,17 @@ exports.addbetplacetime = async (req, res) => {
         return res.send({status:false, message:"Technical Error"});
     }
 }
+exports.getbetplacetime = async (req, res) => {
+    try {
+        let gameId = req.query.gameId;
+        let query = {gameId:gameId};
+        DB.betPlaceTime.findOne(query).then(data =>{
+            if (data != null)
+            return res.send({status: 200, message:'bettime data', data: data});
+            else
+            return res.send({status: 200, message:'bettime data', data: []});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
