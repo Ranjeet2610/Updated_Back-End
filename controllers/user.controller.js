@@ -1721,7 +1721,7 @@ exports.adminUserPL = async (req,res) =>{
 
     //code added by shreesh
     exports.updateNews = function (req, res, next) {
-        DB.news.updateOne({_id:req.params.id},{ $set: req.body }).then((result) => {
+        DB.news.findOneAndUpdate({_id:req.body.id},{ $set: req.body }).then((result) => {
             return res.status(200).json({ status: 'Success', message: 'News updated successfully', "data":result});
         }).catch ((err)=> {
             return res.status(500).json({ success: false, error: err }).end('');
@@ -1730,8 +1730,8 @@ exports.adminUserPL = async (req,res) =>{
 
     //code added by shreesh
     exports.deleteNews = function (req, res, next) {
-        DB.news.remove({_id:req.params.id}).then((result) => {
-            return res.status(200).json({ status: 'Success', message: 'News deleted successfully', "data":result});
+        DB.news.remove({_id:req.body.id}).then((result) => {
+            return res.status(200).json({ status: 'Success', message: 'News deleted successfully'});
         }).catch ((err)=> {
             return res.status(500).json({ success: false, error: err }).end('');
         });

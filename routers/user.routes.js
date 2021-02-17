@@ -133,8 +133,8 @@ module.exports = function(router) {
     //code for news added by shreesh
     router.post('/news',Token.checkToken, Auth.addNews);
     router.get('/news',Token.checkToken, Auth.getNews);
-    router.patch('/news/:id',Token.checkToken, Auth.updateNews);
-    router.delete('/news/:id',Token.checkToken, Auth.deleteNews);
+    router.put('/updatenews',Token.checkToken, Auth.updateNews);
+    router.delete('/deletenews',Token.checkToken, Auth.deleteNews);
 
     //code for news added by shreesh
     router.get('/liveCricketScore',Token.checkToken, Auth.getLiveCricketScore);
