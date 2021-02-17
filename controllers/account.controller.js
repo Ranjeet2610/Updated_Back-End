@@ -1493,7 +1493,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.credit = item3.profit;
+                                    item3.P_L = item3.profit;
                                     item3.save()
 
                                 })
@@ -1521,7 +1521,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.debit = item3.liability;
+                                    item3.P_L = -item3.liability;
                                     item3.save()
 
                                 })
@@ -1550,7 +1550,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.credit = item3.profit;
+                                    item3.P_L = item3.profit;
                                     item3.save()
 
 
@@ -1579,7 +1579,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.debit = item3.liability;
+                                    item3.P_L = -item3.liability;
                                     item3.save()
 
                                 })
@@ -1803,7 +1803,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                         userAccount.save()
                                         userUpdated.save().then((saved) => {
                                             item3.status = "settled";
-                                            item3.credit = item3.profit;
+                                            item3.P_L = item3.profit;
                                             item3.save()
                                         })
                                 }
@@ -1827,7 +1827,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                         userAccount.save()
                                         userUpdated.save().then((saved) => {
                                             item3.status = "settled";
-                                            item3.debit = item3.liability;
+                                            item3.P_L = -item3.liability;
                                             item3.save()
                                         })
                                 }
@@ -1854,7 +1854,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     userAccount.save()
                                     userUpdated.save().then((saved) => {
                                         item3.status = "settled";
-                                        item3.credit = item3.profit;
+                                        item3.P_L = item3.profit;
                                         item3.save()
                                     })
                                 }
@@ -1878,7 +1878,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     userAccount.save()
                                     userUpdated.save().then((saved) => {
                                         item3.status = "settled";
-                                        item3.debit = item3.liability;
+                                        item3.P_L = -item3.liability;
                                         item3.save()
                                     })
                                 }

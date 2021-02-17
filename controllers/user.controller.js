@@ -1701,8 +1701,7 @@ exports.adminUserPL = async (req,res) =>{
     exports.addNews = function (req, res, next) {
         var news = new DB.news({
             newsTitle: req.body.newsTitle,
-            active: req.body.active,
-            newsID: req.body.newsID
+            active: req.body.active
         })
         news.save().then((result) => {
             return res.status(200).json({ status: 'Success', message: 'News added successfully', "data":result});
@@ -2417,6 +2416,38 @@ exports.getbetplacetime = async (req, res) => {
             return res.send({status: 200, message:'bettime data', data: data});
             else
             return res.send({status: 200, message:'bettime data', data: []});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+exports.activeInactiveNews = async (req, res) => {
+    try {
+        let id = req.body.id;
+        DB.news.findOne({_id: id}).then(data => {
+            if (data){
+                if (data.active == true) {
+                    data.active = false
+                } else {
+                    data.active = true
+                }
+            }
+            data.save();
+        });
+        DB.news.updateMany({_id: {$ne: id}}, {$set: {active: false}}).then(data =>{
+            return res.send({status:true, message:"Same has been updated"});
+        })
+        
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+exports.getactiveNews = async (req, res) => {
+    try {
+        DB.news.find({active: true}).then(data => {
+            return res.send({status:true, message:"Active news has been fetched", data: data});
         })
     } catch (error) {
         return res.send({status:false, message:"Technical Error"});

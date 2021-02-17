@@ -148,11 +148,7 @@ var bettingSchema = new mongoose.Schema({
   device:{type:Number},
   liability:{type:Number},
   status:{type:String,required:true},
-  sattlementType: {type:String, default: ''},
-  debit: {type:Number, defualt: 0},
-  credit: {type:Number, defualt: 0}
-
-
+  sattlementType: {type:String, default: ''}
 })
 // event data
 
@@ -288,7 +284,7 @@ userSchema.method('toJSON', function () {
 var newsSchema = new mongoose.Schema({
   newsID:{type:Number,default:0},
   newsTitle:{type:String,unique:false},
-  active:{type:Boolean,default:false},},
+  active:{type:Boolean,default:false}},
   { timestamps: true });
 
 let fancyData = new mongoose.Schema({
