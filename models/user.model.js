@@ -149,7 +149,7 @@ var bettingSchema = new mongoose.Schema({
   liability:{type:Number},
   status:{type:String,required:true},
   sattlementType: {type:String, default: ''},
-  deposit: {type:Number, defualt: 0},
+  debit: {type:Number, defualt: 0},
   credit: {type:Number, defualt: 0}
 
 

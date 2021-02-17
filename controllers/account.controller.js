@@ -1479,10 +1479,10 @@ exports.matchOddsBetSettlement = async (req, res) => {
                         userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability);
                         DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
                             if (userAccount) {
-                                var withdraw = new DB.withdraw({
+                                var withdraw = new DB.deposit({
                                     userName: userUpdated.userName,
                                     accountHolderName: userUpdated,
-                                    amount: item3.liability,
+                                    amount: item3.profit,
                                     balance: userUpdated.walletBalance
 
                                 })
@@ -1521,7 +1521,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.deposit = item3.liability;
+                                    item3.debit = item3.liability;
                                     item3.save()
 
                                 })
@@ -1579,7 +1579,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                 userAccount.save()
                                 userUpdated.save().then((saved) => {
                                     item3.status = "settled";
-                                    item3.deposit = item3.liability;
+                                    item3.debit = item3.liability;
                                     item3.save()
 
                                 })
@@ -1815,10 +1815,10 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                         if (userUpdated) {
                             DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
                                 if (userAccount) {
-                                    var deposit = new DB.deposit({
+                                    var deposit = new DB.withdraw({
                                         userName: userUpdated.userName,
                                         accountHolderName: userUpdated,
-                                        amount: item3.profit,
+                                        amount: item3.liability,
                                         balance: userUpdated.walletBalance
                                     })
                                         deposit.save()
@@ -1827,7 +1827,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                         userAccount.save()
                                         userUpdated.save().then((saved) => {
                                             item3.status = "settled";
-                                            item3.deposit = item3.liability;
+                                            item3.debit = item3.liability;
                                             item3.save()
                                         })
                                 }
@@ -1842,10 +1842,10 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                             DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
                                 if (userAccount) {
                                     userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.profit);
-                                    var withdraw = new DB.withdraw({
+                                    var withdraw = new DB.deposit({
                                         userName: userUpdated.userName,
                                         accountHolderName: userUpdated,
-                                        amount: item3.liability,
+                                        amount: item3.profit,
                                         balance: userUpdated.walletBalance
                                     })
                                     withdraw.save()
@@ -1878,7 +1878,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     userAccount.save()
                                     userUpdated.save().then((saved) => {
                                         item3.status = "settled";
-                                        item3.deposit = item3.liability;
+                                        item3.debit = item3.liability;
                                         item3.save()
                                     })
                                 }

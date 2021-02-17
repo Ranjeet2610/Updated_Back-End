@@ -3,7 +3,7 @@ var express = require('express');
 var Request = require("request");
 const cron = require("node-cron");
 
-var Account = require('./controllers/account.controller');
+//var Account = require('./controllers/account.controller');
 
 
 var app = express();
@@ -142,14 +142,12 @@ cron.schedule("* 23 * * *", function() {
               return console.log(error);
           }
           console.log("Import data again");
-      
       })
     }
-  
   })
 })
   
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
-    console.log(`Server is running on ${properties.PORT} port.`);
+  console.log(`Server is running on ${properties.PORT} port.`);
 })
