@@ -104,26 +104,51 @@ cron.schedule(" 2 * * * * *", function() {
   Request.get({
     "headers": {"content-type": "application/json" },
     "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
-}, (error,response,body) => {
+  }, (error,response,body) => {
     if(error) {
         return console.log(error);
     }
       console.log("Import data again");
   
+  })
 })
-})
- cron.schedule("* 23 * * *", function() {
-    Request.get({
-      "headers": {"content-type": "application/json" },
-      "url": "http://65.1.37.38:4000/api/dumpNonBettingFancy",
+
+cron.schedule("* 22 * * *", function() {
+   Request.get({
+     "headers": {"content-type": "application/json" },
+     "url": "http://65.1.37.38:4000/api/dumpNonBettingFancy",
   }, (error,response,body) => {
-      if(error) {
-          return console.log(error);
-      }
-        console.log("Import data again");
-    
+     if(error) {
+         return console.log(error);
+     }
+       console.log("Import data again");
+   
   })
+})
+
+cron.schedule("* 23 * * *", function() {
+  Request.get({
+    "headers": {"content-type": "application/json" },
+    "url": "http://65.1.37.38:4000/api/storeLiveEvents",
+  }, (error,response,body) => {
+    if(error) {
+        return console.log(error);
+    } else {
+      Request.get({
+        "headers": {"content-type": "application/json" },
+        "url": "http://65.1.37.38:4000/api/storeMarketType",
+      }, (error,response,body) => {
+          if(error) {
+              return console.log(error);
+          }
+          console.log("Import data again");
+      
+      })
+    }
+  
   })
+})
+  
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {
     console.log(`Server is running on ${properties.PORT} port.`);
