@@ -576,7 +576,8 @@ exports.placeBet = (req, res) => {
                         bettype:req.body.bettype,
                         P_L:ProfitLoss,
                         profit:req.body.profit,
-                        liability:req.body.loss
+                        liability:req.body.loss,
+                        eventType: req.body.eventType
                     })
                     // console.log(betting)
                     betting.save().then((saved)=>{
@@ -666,7 +667,8 @@ exports.placeFancyBet = (req, res) => {
                 bettype: req.body.bettype,
                 P_L: ProfitLoss,
                 profit: req.body.profit,
-                liability: req.body.loss
+                liability: req.body.loss,
+                eventType: req.body.eventType
 
             })
             betting.save().then((saved) => {

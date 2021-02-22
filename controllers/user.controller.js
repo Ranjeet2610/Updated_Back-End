@@ -560,21 +560,31 @@ exports.storeLiveEvents = async (req,res) => {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
-  
-    let data = await getEventID(4);
-    data.map((item,index)=>{
-        // console.log(item.event.id + item.event.name + item.event.openDate)
-    var event = new DB.event({
-        eventId:item.event.id,
-        eventName: item.event.name,
-        OpenDate:item.event.openDate
-
+    DB.event_type.find(async function (err, events){
+        if(events){
+            for (var i = 0; i< events.length; i++){
+                let data = await getEventID(events[i].eventType);
+                data.map((item,index)=>{
+                    // console.log(item.event.id + item.event.name + item.event.openDate)
+                var event = new DB.event({
+                    eventId:item.event.id,
+                    eventName: item.event.name,
+                    OpenDate:item.event.openDate,
+                    eventType: events[i].eventType
+                
+                })
+            
+                event.save();
+            
+                });
+                if (events.length -1 == i) {
+                    res.send({status:true, message:"events stored successfully"})
+                }
+            }
+        }
     })
-
-    event.save();
-
-    });
-    res.send({status:true, message:"events stored successfully"})
+    
+    
     
 }
 //change status of events
@@ -600,7 +610,6 @@ exports.ActiveLiveEvents = (req,res) =>{
 
 // activated events for user 
 exports.LiveEventsForUser = (req,res) =>{
-
     DB.event.find({active:true}).then((activeEvents)=>{
 
         return res.send({status:true ,message:"activated events", Data:activeEvents})
@@ -721,6 +730,7 @@ exports.storeMarketType = async (req,res)=>{
                 data.map((item,index)=>{
                     let matchOddsObj = {
                         eventId: eventIds,
+                        eventType: events[i].eventType,
                         marketId:item.marketId,
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
@@ -901,12 +911,23 @@ exports.storeFancyOddsCron = (req, res) => {
 
 //get DBliveEvents
 exports.getDbliveEvents = async (req,res)=>{
-   await DB.event.find().then((events)=>{
-        if(!events){
-            return  res.send({status:false, message:"no events stored"})
-        }
-    res.json(events);
-    })
+    let eventType = req.body.eventType;
+    if(eventType != undefined){
+        await DB.event.find({eventType:eventType}).then((events)=>{
+            if(!events){
+                return  res.send({status:false, message:"no events stored"})
+            }
+            return res.send({status: 200, message:'live events list', data: events});
+        })
+    } else {
+        await DB.event.find().then((events)=>{
+            if(!events){
+                return  res.send({status:false, message:"no events stored"})
+            }
+            return res.send({status: 200, message:'live events list', data: events});
+        })
+    }
+    
 
 }
 
@@ -2453,3 +2474,69 @@ exports.getactiveNews = async (req, res) => {
         return res.send({status:false, message:"Technical Error"});
     }
 }
+
+// exports.storeAllSports = async (req,res) => {
+//     DB.event_type.deleteMany();
+//     Request.get({
+//         "headers": { "content-type": "application/json" },
+//         "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEventTypes",
+//         json: true
+//     }, (error, response, body) => {
+//         if(error) {
+//             return console.log(error);
+//         }
+//         body.map(e => {
+//             let d = {
+//                 eventType: e.eventType,
+//                 name: e.name,
+//                 marketCount: e.marketCount,
+//             };
+//             DB.event_type.insertMany(d);
+            
+//         })
+//         return res.send({status:true, message:"live sports data", data:bodyData})
+        
+//   });
+    
+
+// }
+
+exports.sportEnableDisable = async(req, res) => {
+    try {
+        let eventType = req.body.eventType;
+        DB.event_type.findOne({eventType: eventType}).then(data => {
+            if (data){
+                if (data.status == true) {
+                    data.status = false
+                } else {
+                    data.status = true
+                }
+            }
+            data.save().then(d => {
+                return res.send({status: true, message:"Sport has been updated"});
+            });
+            
+        });
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+exports.getallsports = async (req, res) => {
+    try {
+        DB.event_type.find().then(data=> {
+            return res.send({status:true, message:"Sports have been fetched", data: data});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+// let df = [ { eventType: "1", name: "Soccer", marketCount: 2492 }, { eventType: "2", name: "Tennis", marketCount: 5578 }, { eventType: "4", name: "Cricket", marketCount: 22 }, { eventType: "7", name: "Horse Racing", marketCount: 831 }, { eventType: "4339", name: "Greyhound Racing", marketCount: 298 } ]
+// df.map(e => {
+//                 let d = {
+//                     eventType: e.eventType,
+//                     name: e.name,
+//                     marketCount: e.marketCount,
+//                 };
+//                 DB.event_type.insertMany(d);
+                
+//             })

@@ -148,7 +148,8 @@ var bettingSchema = new mongoose.Schema({
   device:{type:Number},
   liability:{type:Number},
   status:{type:String,required:true},
-  sattlementType: {type:String, default: ''}
+  sattlementType: {type:String, default: ''},
+  eventType: {type:Number,default:0}
 })
 // event data
 
@@ -157,16 +158,24 @@ var eventSchema = new mongoose.Schema({
   eventName:{type:String,unique:false},
   OpenDate:{type:String,unique:false},
   active:{type:Boolean,default:false},
-  eventType:{type: Number, default: 4},
+  eventType:{type: Number, default: 0},
   settlementStatus: {type:String, defualt:'open'},
   settledValue: {type:String, defualt: 0}
 
+})
+
+let eventTypes = new mongoose.Schema({
+  eventType: {type: Number, default: 0},
+  name:{type:String},
+  marketCount: {type: Number, default: 0},
+  status: {type: Boolean, default: true},
 })
 
 // match odds
 
 var matchOddSchema = new mongoose.Schema({
   eventId: {type:Number,default:0},
+  eventType: {type:Number,default:0},
   marketId:{type:String,default:0},
   isEnabled:{type:Boolean,default:true},
   marketName:{type:String,unique:false},
@@ -327,6 +336,7 @@ const fancyScemaa = mongoose.model('fancyData', fancyData);
 const news= mongoose.model('news', newsSchema);
 const scoreCard = mongoose.model("score", score);
 const betPlaceTime = mongoose.model("betPlacetime", betPlacetime);
+const event_type = mongoose.model('eventtype', eventTypes);
 
 
 
@@ -336,4 +346,4 @@ const betPlaceTime = mongoose.model("betPlacetime", betPlacetime);
 
 
 
-module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard, betPlaceTime}
+module.exports = {userSchema,userSportsInfo,exposureInfo,userChipsInfo,user,account,deposit,withdraw,betting,event,matchOdds,manualMatchOdds,FancyOdds,matchRunner,FancyRunner,news, fancyScemaa, scoreCard, betPlaceTime, event_type}

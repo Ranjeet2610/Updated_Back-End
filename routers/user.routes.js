@@ -159,4 +159,7 @@ module.exports = function(router) {
     router.get('/getbetplacetime', Token.checkToken, Auth.getbetplacetime);
     router.put('/activeInactiveNews', Token.checkToken, Auth.activeInactiveNews);
     router.get('/getactiveNews', Token.checkToken, Auth.getactiveNews);
+    //router.get('/storeAllSports',Token.checkToken,  Auth.storeAllSports);
+    router.put('/sportEnableDisable', Token.checkToken, Auth.sportEnableDisable);
+    router.get('/getallsports', Token.checkToken, Auth.getallsports);
     }
