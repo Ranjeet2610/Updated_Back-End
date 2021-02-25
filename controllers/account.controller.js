@@ -2006,6 +2006,8 @@ exports.getManualOdds = (req, res) => {
 
             if (manualOdds) {
                 return res.json(manualOdds)
+            } else {
+                return res.json([])
             }
 
         })

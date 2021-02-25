@@ -560,7 +560,7 @@ exports.storeLiveEvents = async (req,res) => {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
-    DB.event_type.find(async function (err, events){
+    DB.event_type.find({status:true},async function (err, events){
         if(events){
             for (var i = 0; i< events.length; i++){
                 let data = await getEventID(events[i].eventType);
