@@ -162,4 +162,8 @@ module.exports = function(router) {
     //router.get('/storeAllSports',Token.checkToken,  Auth.storeAllSports);
     router.put('/sportEnableDisable', Token.checkToken, Auth.sportEnableDisable);
     router.get('/getallsports', Token.checkToken, Auth.getallsports);
+    router.get('/getChipsData', Token.checkToken, Auth.getChipsData);
+    router.post('/getLiveMatchOdds', Token.checkToken, Auth.getLiveMatchOdds);
+    router.post('/getAllFancyStack', Token.checkToken, Auth.getAllFancyStack);
+    
     }

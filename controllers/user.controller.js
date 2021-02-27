@@ -1203,7 +1203,11 @@ exports.superAdminUpDown = async(req,res)=>{
 exports.userPL = async (req,res)=>{
   
     try{
-
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        if (!startDate || !endDate){
+            return res.send({status: false, message: 'Kindly share the date'});
+        }
         masters = await Utils.getAllMasterusers(req.body.masterName);
 
       Promise.all(masters).then((Data)=>{
@@ -1217,7 +1221,7 @@ exports.userPL = async (req,res)=>{
         var mergedData = [].concat.apply([], Data);
         mergedData.map((item,index)=>{
             // add sports id
-            cricketData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+            cricketData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
             // cricketData.push(DB.betting.find({clientName:item.userName,status:"settled",marketType:"Fancy"}));
         })
 
@@ -1248,31 +1252,31 @@ exports.userPL = async (req,res)=>{
 
 
                 DATA.map((item)=>{
-                let object = {};
-                    var profit2=0;
-                   var loss2=0;
-                   var fancyprofit=0;
-                   var fancyloss=0;
-
-               item.map((childItem)=>{
-                   if(childItem.marketType=="Fancy"){
-                    fancyprofit = fancyprofit + childItem.profit,
-                    fancyloss = fancyloss + childItem.liability
-
-                    //    console.log(childItem.profit)
-                    //    console.log(childItem.liability)
-
-
-                   }
-                profit2 = profit2 + childItem.profit,
-                loss2 = loss2 + childItem.liability
-
-               })
-               object.userName = item[0].clientName
-               object.fancyProfitLoss = fancyprofit - fancyloss
-               object.ProfitLoss = profit2 - loss2
-                 finalobject.push(object)
-  
+                    let object = {};
+                    var fancyprofit=0;
+                    var cricketProfit =0;
+                    var soccerProfit = 0;
+                    var tennisProfit = 0;
+                      item.map((childItem)=>{
+                        if(childItem.marketType=="Fancy"){
+                            fancyprofit = fancyprofit + childItem.P_L
+                        }
+                        if (childItem.eventType == 4) {
+                            cricketProfit = cricketProfit+ childItem.P_L
+                        } else if (childItem.eventType == 2) {
+                            tennisProfit = tennisProfit+ childItem.P_L
+                        } else if(childItem.eventType == 1) {
+                            soccerProfit = soccerProfit+ childItem.P_L
+                        }
+        
+                       })
+                    //    object.data =item;
+                    object.userName = item[0].clientName
+                    object.fancyProfitLoss = fancyprofit
+                    object.cricketProfit = cricketProfit
+                    object.soccerProfit = soccerProfit
+                    object.tennisProfit = tennisProfit
+                    finalobject.push(object)
                  })
                 return res.json(finalobject)   
    
@@ -1298,6 +1302,11 @@ catch(error){
 exports.adminUserPL = async (req,res) =>{
 
     try{
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        if (!startDate || !endDate){
+            return res.send({status: false, message: 'Kindly share the date'});
+        }
             masters = await Utils.getAllAdminMasters(req.body.adminName);
             const Users = [];
     
@@ -1311,7 +1320,7 @@ exports.adminUserPL = async (req,res) =>{
             let bettingData = []
             var mergedData = [].concat.apply([], Data);
             mergedData.map((item,index)=>{
-                bettingData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+                bettingData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
             })
     
             Promise.all(bettingData).then(data=>{
@@ -1339,37 +1348,36 @@ exports.adminUserPL = async (req,res) =>{
             //  console.log(DATA)
             //  return res.json(DATA)
               masterData = DATA.map(async(item)=>{
-                    let object = {};
-                   
-                        var profit2=0;
-                       var loss2=0;
-                       var fancyprofit=0;
-                       var fancyloss=0;
+                let object = {};
+                var fancyprofit=0;
+                var cricketProfit =0;
+                var soccerProfit = 0;
+                var tennisProfit = 0;
                   item.map((childItem)=>{
-
                     if(childItem.marketType=="Fancy"){
-                        fancyprofit = fancyprofit + childItem.profit,
-                        fancyloss = fancyloss + childItem.liability
-    
-                        //    console.log(childItem.profit)
-                        //    console.log(childItem.liability)
-    
-    
-                       }
-
-                    profit2 = profit2 + childItem.profit,
-                    loss2 = loss2 + childItem.liability
+                        fancyprofit = fancyprofit + childItem.P_L
+                    }
+                    if (childItem.eventType == 4) {
+                        cricketProfit = cricketProfit+ childItem.P_L
+                    } else if (childItem.eventType == 2) {
+                        tennisProfit = tennisProfit+ childItem.P_L
+                    } else if(childItem.eventType == 1) {
+                        soccerProfit = soccerProfit+ childItem.P_L
+                    }
     
                    })
                 //    object.data =item;
-                   object.userName = item[0].clientName
-                   master = await Utils.getMyprofile(item[0].clientName);
-                   object.master = master.master
-                   object.fancyProfitLoss = fancyprofit - fancyloss
-                   object.ProfitLoss = profit2 - loss2
-          
-                    return object
-                     })
+                object.userName = item[0].clientName
+                var master = await Utils.getMyprofile(item[0].clientName);
+                object.master = master.master
+                admin = await Utils.getMyprofile(master.master);
+                object.admin =  admin.admin
+                object.fancyProfitLoss = fancyprofit
+                object.cricketProfit = cricketProfit
+                object.soccerProfit = soccerProfit
+                object.tennisProfit = tennisProfit
+                return object
+                })
                      finaloriginal.push(finalobject);
 
                       Promise.all(masterData).then(finalData=>{
@@ -1398,24 +1406,28 @@ exports.adminUserPL = async (req,res) =>{
                                 finalmasterarray.map((item,index)=>{
 
                                     let  masterProfitloss = {};
-                                    // console.log(item)
-                                    var masterPL = 0;
-                                    var masterfancyPL = 0;
+                                    var cricketPL = 0;
+                                    var tennisPL = 0;
+                                    var soccerPL = 0;
+                                    var fancyPL = 0;
                                     item.map((childitem)=>{
-                                        masterfancyPL = masterfancyPL + childitem.fancyProfitLoss
-                                        masterPL = masterPL + childitem.ProfitLoss
-
+                                        cricketPL = cricketPL + childitem.cricketProfit;
+                                        tennisPL = tennisPL + childitem.tennisProfit;
+                                        soccerPL = soccerPL + childitem.soccerProfit;
+                                        fancyPL = fancyPL + childitem.fancyProfitLoss;
                                     })
 
-                                    masterProfitloss.master = item[0].master
-                                    masterProfitloss.profitLoss = masterPL
-                                    masterProfitloss.fancyPL = masterfancyPL
+                                    masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.cricketPL = cricketPL;
+                                    masterProfitloss.tennisPL = tennisPL;
+                                    masterProfitloss.soccerPL = soccerPL;
+                                    masterProfitloss.fancyprofitLoss = fancyPL;
 
 
                                     // return item.master: masterPL
                                     masterArray.push(masterProfitloss);
 
-                                })  
+                                })
                               
                                 // console.log(masterArray)
                         return res.json({userPL:mergedfinalData,masterPL:masterArray})
@@ -1575,6 +1587,11 @@ exports.adminUserPL = async (req,res) =>{
     exports.superAdminUserPL = async (req,res) =>{
 
         try{
+            let startDate = req.body.startDate;
+            let endDate = req.body.endDate;
+            if (!startDate || !endDate){
+                return res.send({status: false, message: 'Kindly share the date'});
+            }
                 masters = await Utils.getAllMasters();
                 const Users = [];
         
@@ -1588,7 +1605,7 @@ exports.adminUserPL = async (req,res) =>{
                 let bettingData = []
                 var mergedData = [].concat.apply([], Data);
                 mergedData.map((item,index)=>{
-                    bettingData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+                    bettingData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
                 })
         
                 Promise.all(bettingData).then(data=>{
@@ -1616,42 +1633,37 @@ exports.adminUserPL = async (req,res) =>{
         
               var masterData=  DATA.map(async(item)=>{
                         let object = {};
-                       
-                            var profit2=0;
-                           var loss2=0;
-                           var fancyprofit=0;
-                           var fancyloss=0;
+                        var fancyprofit=0;
+                        var cricketProfit =0;
+                        var soccerProfit = 0;
+                        var tennisProfit = 0;
                        item.map((childItem)=>{
                         if(childItem.marketType=="Fancy"){
-                            fancyprofit = fancyprofit + childItem.profit,
-                            fancyloss = fancyloss + childItem.liability
-        
-        
-                           }
-
-                        profit2 = profit2 + childItem.profit,
-                        loss2 = loss2 + childItem.liability
+                            fancyprofit = fancyprofit + childItem.P_L
+                        }
+                        if (childItem.eventType == 4) {
+                            cricketProfit = cricketProfit+ childItem.P_L
+                        } else if (childItem.eventType == 2) {
+                            tennisProfit = tennisProfit+ childItem.P_L
+                        } else if(childItem.eventType == 1) {
+                            soccerProfit = soccerProfit+ childItem.P_L
+                        }
         
                        })
                     //    object.data =item;
-                       object.userName = item[0].clientName
-                       var master = await Utils.getMyprofile(item[0].clientName);
-                       object.master = master.master
-                       admin = await Utils.getMyprofile(master.master);
-                       object.admin =  admin.admin
-                       object.fancyProfitLoss = fancyprofit - fancyloss
-                       object.ProfitLoss = profit2 - loss2
-
-                    
-            
-          
+                        object.userName = item[0].clientName
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        object.master = master.master
+                        admin = await Utils.getMyprofile(master.master);
+                        object.admin =  admin.admin
+                        object.fancyProfitLoss = fancyprofit
+                        object.cricketProfit = cricketProfit
+                        object.soccerProfit = soccerProfit
+                        object.tennisProfit = tennisProfit
                         return object
-                         })
-   
-    
-    
+                        })
+                         
                          Promise.all(masterData).then(finalData=>{
-    
                             var mergedfinalData = [].concat.apply([], finalData);
   
                     
@@ -1674,18 +1686,22 @@ exports.adminUserPL = async (req,res) =>{
                                 finalmasterarray.map((item,index)=>{
 
                                     let  masterProfitloss = {};
-                                    var masterPL = 0;
+                                    var cricketPL = 0;
+                                    var tennisPL = 0;
+                                    var soccerPL = 0;
                                     var fancyPL = 0;
                                     item.map((childitem)=>{
-                                        masterPL = masterPL + childitem.ProfitLoss
-                                        fancyPL = fancyPL + childitem.fancyProfitLoss
-
-
+                                        cricketPL = cricketPL + childitem.cricketProfit;
+                                        tennisPL = tennisPL + childitem.tennisProfit;
+                                        soccerPL = soccerPL + childitem.soccerProfit;
+                                        fancyPL = fancyPL + childitem.fancyProfitLoss;
                                     })
 
-                                    masterProfitloss.admin = item[0].admin
-                                    masterProfitloss.profitLoss = masterPL
-                                    masterProfitloss.fancyprofitLoss = fancyPL
+                                    masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.cricketPL = cricketPL;
+                                    masterProfitloss.tennisPL = tennisPL;
+                                    masterProfitloss.soccerPL = soccerPL;
+                                    masterProfitloss.fancyprofitLoss = fancyPL;
 
 
                                     // return item.master: masterPL
@@ -2540,3 +2556,190 @@ exports.getallsports = async (req, res) => {
 //                 DB.event_type.insertMany(d);
                 
 //             })
+
+
+exports.getChipsData = async (req, res) => { //// get user chip data includes admin master username
+    try {
+        DB.user.aggregate([
+        {
+            $match:
+            {
+                Master: false, Admin: false, superAdmin: false
+            }
+        },
+        {
+            $lookup: {
+                from: "users", 
+                localField: "master",
+                foreignField: "userName",
+                as: "userInfo"
+            }
+        }, {
+            $addFields: 
+            {
+                "admin":"$userInfo.admin"
+            }
+            }
+        
+        ,{
+                $project: {
+                    "__v": 0,
+                    "createdAt":0,
+                    "status":0,
+                    "walletBalance":0,
+                    "exposure":0,
+                    "creditLimit":0,
+                    "creditGiven":0,
+                    "freeChips":0,
+                    "enableBetting":0,
+                    "blocked": 0,
+                    "Commission":0,
+                    "sessionCommission":0,
+                    "ref":0,
+                    "userSportsInfo":0,
+                    "completedCasinoGame":0,
+                    "winCasinoGame":0,
+                    "password":0,
+                    "passwordString":0,
+                    "Master": 0,
+                    "Admin":0,
+                    "superAdmin":0,
+                    "token":0,
+                    'userInfo':0
+                               
+                }
+            }
+    
+    ]).then(results => {
+        return res.status(200).json({ status: 'Success', "data": results});
+    });
+    
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+    }
+}
+
+exports.getLiveMatchOdds = async (req,res) => {
+    var eventId= req.body.eventId;
+    if(!eventId) {
+        return res.send({status:false, message:"Kindly share the eventid"})
+    }
+    DB.matchOdds.findOne({eventId:eventId}).then(data => {
+        if (data == null) {
+            return res.send({status:false, message:"Data not found"});
+        }
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": data.marketId}
+        }, (error, response, body) => {
+            if(error) {
+                return console.log(error);
+            }
+            //console.log(body)
+            const bodyData = JSON.parse(body)
+            return res.send({status:true, message:"live market odd", data:bodyData})
+        });
+    })
+    
+}
+
+
+
+
+exports.getAllFancyStack = async (req, res) => {  // get total stack of user in fancy case inludes user's admin master user name based on start time and end time
+    try {
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        DB.betting.aggregate([
+            {$match:{
+                createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}
+            }
+        },
+        
+            {
+              $lookup: {
+                from: "users", 
+                localField: "userid",
+                foreignField: "_id",
+                as: "userInfo"
+              }
+            }, {
+                $lookup: {
+                    from: "users", 
+                    localField: "userInfo.master",
+                    foreignField: "userName",
+                    as: "userInfos"
+                }
+            }, {
+                $addFields: 
+                {
+                    "userInfo.admin":"$userInfos.admin",
+                    "userInfo.master":"$userInfo.master",
+                    "userInfo.id":"$userInfo._id"
+                }
+                }
+            ,{
+                $project: {
+                    "__v": 0,
+                    "userInfo._id": 0,
+                    "userInfo.__v": 0,
+                    "userInfo.createdAt":0,
+                    "userInfo.status":0,
+                    "userInfo.walletBalance":0,
+                    "userInfo.exposure":0,
+                    "userInfo.profitLossChips":0,
+                    "userInfo.creditLimit":0,
+                    "userInfo.creditGiven":0,
+                    "userInfo.freeChips":0,
+                    "userInfo.enableBetting":0,
+                    "userInfo.blocked": 0,
+                    "userInfo.Commission":0,
+                    "userInfo.sessionCommission":0,
+                    "userInfo.ref":0,
+                    "userInfo.userSportsInfo":0,
+                    "userInfo.completedCasinoGame":0,
+                    "userInfo.winCasinoGame":0,
+                    "userInfo.userName":0,
+                    "userInfo.Name":0,
+                    "userInfo.password":0,
+                    "userInfo.passwordString":0,
+                    "userInfo.Master": 0,
+                    "userInfo.superAdmin":0,
+                    "userInfo.Admin":0,
+                    "userInfo.token":0,
+                    "userInfos":0,
+                    "_id":0,
+                    "createdAt":0,
+                    "createdDate":0,
+                    "sattlementType":0,
+                    "eventType":0,
+                    "userid":0,
+                    "IP":0,
+                    
+                    "description":0,
+                    "selection":0,
+                    "selectionID":0,
+                    "eventID":0,
+                    "marketID":0,
+                    "odds":0,
+                    "status":0,
+                    "bettype":0,
+                    "P_L":0,
+                    "profit":0,
+                    "liability":0,
+                    "betcode":0
+                               
+                }
+            }
+          ]).then(results => {
+              let d = results.filter(e => e.marketType == 'Fancy');
+                return res.status(200).json({ status: 'Success', "data": d});
+          });
+
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+    }
+}

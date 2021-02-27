@@ -22,7 +22,7 @@ var userSchema = new mongoose.Schema({
   Admin:{type:Boolean,default:false},
   superAdmin:{type:Boolean,default:false},
   blocked:{type:Boolean,default:false},
-  Commission:{type:Number,default:0},
+  Commission:{type:Number,default:2},
   sessionCommission:{type:Number,default:0},
   ref:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
   userSportsInfo:[{type: mongoose.Schema.Types.ObjectId, ref: 'userSportsInfo'}],
@@ -129,7 +129,7 @@ var accountSchema = new mongoose.Schema({
 
 var bettingSchema = new mongoose.Schema({
   createdAt: {type:String, default: new Date().toISOString().substring(0, 10)},
-  createdDate  :{type:String, default: new Date()},
+  createdDate  :{type:Date, default: new Date().toISOString()},
   clientName:{type:String,required:true},
   userid:{type: mongoose.Schema.Types.ObjectId, ref: 'user'},
   IP:{type:String},
@@ -149,8 +149,9 @@ var bettingSchema = new mongoose.Schema({
   liability:{type:Number},
   status:{type:String,required:true},
   sattlementType: {type:String, default: ''},
-  eventType: {type:Number,default:0}
-})
+  eventType: {type:Number,default:0},
+  mCommision:{type:Number,default:0}
+},{ timestamps: true })
 // event data
 
 var eventSchema = new mongoose.Schema({

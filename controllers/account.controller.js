@@ -1476,32 +1476,44 @@ exports.matchOddsBetSettlement = async (req, res) => {
     DB.betting.find({ status: "open", marketID: marketId }).then((openBets) => {
         openBets.map((item3, index) => {
             if (item3.selectionID == winnerSelectionId && item3.bettype === "Back") {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: {  exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability);
-                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                            if (userAccount) {
-                                var withdraw = new DB.deposit({
-                                    userName: userUpdated.userName,
-                                    accountHolderName: userUpdated,
-                                    amount: item3.profit,
-                                    balance: userUpdated.walletBalance
+                        DB.user.findOne({userName: userUpdated.master}).then(masterData => {
+                            let commission = masterData.Commission;
+                            let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
+                            item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
+                            userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
+                            userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
+                            DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
+                                d.mCommision = commValue;
+                                d.save();
+                            });
+                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                                if (userAccount) {
+                                    var withdraw = new DB.deposit({
+                                        userName: userUpdated.userName,
+                                        accountHolderName: userUpdated,
+                                        amount: item3.profit,
+                                        balance: userUpdated.walletBalance
 
-                                })
+                                    })
 
-                                withdraw.save()
-                                userAccount.withdrawTransaction.push(withdraw)
-                                userAccount.lastWithdrawDate = new Date()
-                                userAccount.save()
-                                userUpdated.save().then((saved) => {
-                                    item3.status = "settled";
-                                    item3.P_L = item3.profit;
-                                    item3.save()
+                                    withdraw.save()
+                                    userAccount.withdrawTransaction.push(withdraw)
+                                    userAccount.lastWithdrawDate = new Date()
+                                    userAccount.save()
+                                    userUpdated.save().then((saved) => {
+                                        item3.status = "settled";
+                                        item3.P_L = item3.profit;
+                                        item3.save()
 
-                                })
+                                    })
 
-                            }
+                                }
+                            })
+
                         })
+                        
                     }
                 })
             } else if (item3.selectionID == winnerSelectionId && item3.bettype === "Lay") {
@@ -1533,32 +1545,42 @@ exports.matchOddsBetSettlement = async (req, res) => {
                     }
                 })
             } else if (item3.selectionID != winnerSelectionId && item3.bettype === "Lay") {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability)
-                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                            if (userAccount) {
-                                var deposit = new DB.deposit({
-                                    userName: userUpdated.userName,
-                                    accountHolderName: userUpdated,
-                                    amount: item3.profit,
-                                    balance: userUpdated.walletBalance
+                        DB.user.findOne({userName: userUpdated.master}).then(masterData => {
+                            let commission = masterData.Commission;
+                            let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
+                            item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
+                            userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
+                            userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
+                            DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
+                                d.mCommision = commValue;
+                                d.save();
+                            });
+                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                                if (userAccount) {
+                                    var deposit = new DB.deposit({
+                                        userName: userUpdated.userName,
+                                        accountHolderName: userUpdated,
+                                        amount: item3.profit,
+                                        balance: userUpdated.walletBalance
 
-                                })
+                                    })
 
-                                deposit.save()
-                                userAccount.depositTransaction.push(deposit)
-                                lastDepositDate = new Date()
-                                userAccount.save()
-                                userUpdated.save().then((saved) => {
-                                    item3.status = "settled";
-                                    item3.P_L = item3.profit;
-                                    item3.save()
+                                    deposit.save()
+                                    userAccount.depositTransaction.push(deposit)
+                                    lastDepositDate = new Date()
+                                    userAccount.save()
+                                    userUpdated.save().then((saved) => {
+                                        item3.status = "settled";
+                                        item3.P_L = item3.profit;
+                                        item3.save()
 
 
-                                })
+                                    })
 
-                            }
+                                }
+                            })
                         })
                     }
                 })
@@ -1788,32 +1810,42 @@ exports.fancyOddsBetSettlement = async (req, res) => {
         openBets.map((item3, index) => {
             if (item3.bettype === "Back") {
                 if(item3.odds <= result) {
-                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.profit, profitLossChips: item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: {exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
                         if (userUpdated) {
-                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                if (userAccount) {
-                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability);
-                                    var deposit = new DB.deposit({
-                                        userName: userUpdated.userName,
-                                        accountHolderName: userUpdated,
-                                        amount: item3.profit,
-                                        balance: userUpdated.walletBalance
-                                    })
-                                        deposit.save()
-                                        userAccount.depositTransaction.push(deposit);
-                                        lastDepositDate = new Date()
-                                        userAccount.save()
-                                        userUpdated.save().then((saved) => {
-                                            item3.status = "settled";
-                                            item3.P_L = item3.profit;
-                                            item3.save()
+                            DB.user.findOne({userName: userUpdated.master}).then(masterData => {
+                                let commission = masterData.Commission;
+                                let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
+                                item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
+                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
+                                userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
+                                DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
+                                    d.mCommision = commValue;
+                                    d.save();
+                                });
+                                DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                                    if (userAccount) {
+                                        var deposit = new DB.deposit({
+                                            userName: userUpdated.userName,
+                                            accountHolderName: userUpdated,
+                                            amount: item3.profit,
+                                            balance: userUpdated.walletBalance
                                         })
-                                }
+                                            deposit.save()
+                                            userAccount.depositTransaction.push(deposit);
+                                            lastDepositDate = new Date()
+                                            userAccount.save()
+                                            userUpdated.save().then((saved) => {
+                                                item3.status = "settled";
+                                                item3.P_L = item3.profit;
+                                                item3.save()
+                                            })
+                                    }
+                                })
                             })
                         }
                     })
                 } else {
-                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { profitLossChips: -item3.profit, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
                         if (userUpdated) {
                             DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
                                 if (userAccount) {
@@ -1839,27 +1871,37 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                 }
             } else if (item3.bettype === "Lay") {
                 if(item3.odds > result) {
-                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { walletBalance: item3.liability, profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                    DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
                         if (userUpdated) {
-                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                if (userAccount) {
-                                    userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.profit);
-                                    var withdraw = new DB.deposit({
-                                        userName: userUpdated.userName,
-                                        accountHolderName: userUpdated,
-                                        amount: item3.profit,
-                                        balance: userUpdated.walletBalance
-                                    })
-                                    withdraw.save()
-                                    userAccount.withdrawTransaction.push(withdraw)
-                                    userAccount.lastWithdrawDate = new Date()
-                                    userAccount.save()
-                                    userUpdated.save().then((saved) => {
-                                        item3.status = "settled";
-                                        item3.P_L = item3.profit;
-                                        item3.save()
-                                    })
-                                }
+                            DB.user.findOne({userName: userUpdated.master}).then(masterData => {
+                                let commission = masterData.Commission;
+                                let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
+                                item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
+                                userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
+                                userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
+                                DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
+                                    d.mCommision = commValue;
+                                    d.save();
+                                });
+                                DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
+                                    if (userAccount) {
+                                        var withdraw = new DB.deposit({
+                                            userName: userUpdated.userName,
+                                            accountHolderName: userUpdated,
+                                            amount: item3.profit,
+                                            balance: userUpdated.walletBalance
+                                        })
+                                        withdraw.save()
+                                        userAccount.withdrawTransaction.push(withdraw)
+                                        userAccount.lastWithdrawDate = new Date()
+                                        userAccount.save()
+                                        userUpdated.save().then((saved) => {
+                                            item3.status = "settled";
+                                            item3.P_L = item3.profit;
+                                            item3.save()
+                                        })
+                                    }
+                                })
                             })
                         }
                     })
@@ -1937,15 +1979,13 @@ exports.getUserSectionProfitAndLoss = async (req, res) => {
             let finalobj = [];
             let pp = data.map((item) => {
                 let obj = {};
-                var profit1 = 0;
-                var loss = 0;
+                var profitLoss = 0;
                 item.map((childItem) => {
-                    profit1 = profit1 + childItem.profit,
-                        loss = loss + childItem.liability
+                    profitLoss = profitLoss + childItem.P_L
 
                 })
                 obj.data = item;
-                obj.ProfitLoss = profit1 - loss
+                obj.ProfitLoss = profitLoss
                 finalobj.push(obj)
 
             })
@@ -2065,16 +2105,14 @@ exports.adminProfitAndLoss = async (req, res) => {
 
                     DATA.map((item) => {
                         let object = {};
-                        var profit2 = 0;
-                        var loss2 = 0;
+                        var profitLoss = 0;
                         item.map((childItem) => {
-                            profit2 = profit2 + childItem.profit,
-                                loss2 = loss2 + childItem.liability
+                            profitLoss = profitLoss + childItem.P_L
 
                         })
                         object.data = item;
                         object.marketID = item[0].marketID
-                        object.ProfitLoss = profit2 - loss2
+                        object.ProfitLoss = profitLoss
                         finalobject.push(object)
 
                     })
@@ -2148,16 +2186,14 @@ exports.superAdminProfitAndLoss = async (req, res) => {
 
                     DATA.map((item) => {
                         let object = {};
-                        var profit2 = 0;
-                        var loss2 = 0;
+                        var profitLoss = 0;
                         item.map((childItem) => {
-                            profit2 = profit2 + childItem.profit,
-                                loss2 = loss2 + childItem.liability
+                            profitLoss = profitLoss + childItem.P_L
 
                         })
                         object.data = item;
                         object.marketID = item[0].marketID
-                        object.ProfitLoss = profit2 - loss2
+                        object.ProfitLoss = profitLoss
                         finalobject.push(object)
 
                     })
@@ -2237,16 +2273,14 @@ exports.masterProfitAndLoss = async (req, res) => {
 
                     DATA.map((item) => {
                         let object = {};
-                        var profit2 = 0;
-                        var loss2 = 0;
+                        var profitLoss = 0;
                         item.map((childItem) => {
-                            profit2 = profit2 + childItem.profit,
-                                loss2 = loss2 + childItem.liability
+                            profitLoss = profitLoss + childItem.P_L
 
                         })
                         object.data = item;
                         object.marketID = item[0].marketID
-                        object.ProfitLoss = profit2 - loss2
+                        object.ProfitLoss = profitLoss
                         finalobject.push(object)
 
                     })
