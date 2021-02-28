@@ -138,7 +138,8 @@ if(result){
         expiresIn: "1h"
     });
     refreshTokens[refreshToken] = data.userName; 
-    let query = {userName:body.userName};
+    
+    let query = {userName:body.userName, Master:false, Admin:false, superAdmin:false};
     let updatedToken = {$set:{token:jsontoken}};
     DB.user.updateOne(query, updatedToken).then((result)=>{
         return res.json({
