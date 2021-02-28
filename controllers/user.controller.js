@@ -1410,7 +1410,9 @@ exports.adminUserPL = async (req,res) =>{
                                     var tennisPL = 0;
                                     var soccerPL = 0;
                                     var fancyPL = 0;
+                                    var masterPL = 0;
                                     item.map((childitem)=>{
+                                        masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
                                         cricketPL = cricketPL + childitem.cricketProfit;
                                         tennisPL = tennisPL + childitem.tennisProfit;
                                         soccerPL = soccerPL + childitem.soccerProfit;
@@ -1418,6 +1420,7 @@ exports.adminUserPL = async (req,res) =>{
                                     })
 
                                     masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.profitLoss = masterPL
                                     masterProfitloss.cricketPL = cricketPL;
                                     masterProfitloss.tennisPL = tennisPL;
                                     masterProfitloss.soccerPL = soccerPL;
@@ -1690,7 +1693,9 @@ exports.adminUserPL = async (req,res) =>{
                                     var tennisPL = 0;
                                     var soccerPL = 0;
                                     var fancyPL = 0;
+                                    var masterPL = 0;
                                     item.map((childitem)=>{
+                                        masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
                                         cricketPL = cricketPL + childitem.cricketProfit;
                                         tennisPL = tennisPL + childitem.tennisProfit;
                                         soccerPL = soccerPL + childitem.soccerProfit;
@@ -1698,6 +1703,7 @@ exports.adminUserPL = async (req,res) =>{
                                     })
 
                                     masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.profitLoss = masterPL
                                     masterProfitloss.cricketPL = cricketPL;
                                     masterProfitloss.tennisPL = tennisPL;
                                     masterProfitloss.soccerPL = soccerPL;
