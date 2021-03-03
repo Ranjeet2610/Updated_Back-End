@@ -150,7 +150,8 @@ var bettingSchema = new mongoose.Schema({
   status:{type:String,required:true},
   sattlementType: {type:String, default: ''},
   eventType: {type:Number,default:0},
-  mCommision:{type:Number,default:0}
+  mCommision:{type:Number,default:0},
+  settledValue: {type:String, defualt: 0}
 },{ timestamps: true })
 // event data
 
@@ -211,7 +212,10 @@ var FancyOddSchema = new mongoose.Schema({
 var matchRunnerSchema = new mongoose.Schema({
   marketId:{type:String,default:0},
   selectionId:{type:Number,default:0},
-  runnerName:{type:String,unique:false}
+  runnerName:{type:String,unique:false},
+  eventId: {type:Number,default:0},
+  backOdds:{type:String,unique:false},
+  layOdds:{type:String,unique:false}
 
 })
 

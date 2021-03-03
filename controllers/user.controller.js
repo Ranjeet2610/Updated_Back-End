@@ -16,6 +16,7 @@ var refreshTokens = {}
 const { hashSync, genSaltSync, compareSync } = require("bcryptjs");
 const { sign } = require("jsonwebtoken");
 const { forEachRight, result } = require("lodash");
+const { masterProfitAndLoss } = require("./account.controller");
 
 /**
  * @author: Sopra Steria
@@ -121,7 +122,7 @@ if (data == null) {
         data :"This user does not exist"
     });
 }
-if(data.blocked==true){
+if(data.status==true){
 
 return res.json({ success:false,message :"user is blocked"})
 }
@@ -611,9 +612,29 @@ exports.ActiveLiveEvents = (req,res) =>{
 
 // activated events for user 
 exports.LiveEventsForUser = (req,res) =>{
-    DB.event.find({active:true}).then((activeEvents)=>{
+    // DB.event.find({active:true}).then((activeEvents)=>{
 
-        return res.send({status:true ,message:"activated events", Data:activeEvents})
+    //     return res.send({status:true ,message:"activated events", Data:activeEvents})
+    // });
+    DB.event.aggregate([
+        {$match:{ "active": true}},
+        {
+            $lookup: {
+                from: "matchrunners", 
+                localField: "eventId",
+                foreignField: "eventId",
+                as: "runners"
+              }
+        },
+        {
+            $project: {
+                '__v': 0,
+                'runners.__v':0
+            }
+        }
+        
+    ]).then(data => {
+        return res.send({status:true ,message:"activated events", Data:data})
     })
 
 }
@@ -750,7 +771,8 @@ exports.storeMarketType = async (req,res)=>{
                     var matchRunner = new DB.matchRunner({
                         marketId:item.marketId,
                         selectionId: item1.selectionId,
-                        runnerName:item1.runnerName
+                        runnerName:item1.runnerName,
+                        eventId: eventIds
                     })
                     matchRunner.save(function(err,result){ 
                         if (err){ 
@@ -1243,22 +1265,19 @@ exports.userPL = async (req,res)=>{
                 }));
 
             })
-
+            
             Promise.all(MarketDATA).then(DATA=>{
-                // console.log(DATA)
-
-
-
                 let finalobject = [];
-
-
-                DATA.map((item)=>{
+                let len = DATA.length;
+                DATA.map(async(item, i)=>{
                     let object = {};
                     var fancyprofit=0;
                     var cricketProfit =0;
                     var soccerProfit = 0;
                     var tennisProfit = 0;
+                    var mCommision = 0;
                       item.map((childItem)=>{
+                        mCommision = mCommision + childItem.mCommision;
                         if(childItem.marketType=="Fancy"){
                             fancyprofit = fancyprofit + childItem.P_L
                         }
@@ -1273,17 +1292,22 @@ exports.userPL = async (req,res)=>{
                        })
                     //    object.data =item;
                     object.userName = item[0].clientName
+                    var master = await Utils.getMyprofile(item[0].clientName);
+                    admin = await Utils.getMyprofile(master.master);
+                    object.Commission = admin.Commission;
                     object.fancyProfitLoss = fancyprofit
                     object.cricketProfit = cricketProfit
                     object.soccerProfit = soccerProfit
-                    object.tennisProfit = tennisProfit
-                    finalobject.push(object)
+                    object.tennisProfit = tennisProfit;
+                    object.mCommision  = mCommision;
+                    object.ProfitLoss = cricketProfit + soccerProfit + tennisProfit
+                    finalobject.push(object);
+                    if (len == i+1) {
+                        return res.json(finalobject);
+                    }
                  })
-                return res.json(finalobject)   
-   
-
-             })      
-
+                 
+             })
             })
 
         })      
@@ -1308,16 +1332,16 @@ exports.adminUserPL = async (req,res) =>{
         if (!startDate || !endDate){
             return res.send({status: false, message: 'Kindly share the date'});
         }
-            masters = await Utils.getAllAdminMasters(req.body.adminName);
+           let masters = await Utils.getAllAdminMasters(req.body.adminName);
             const Users = [];
     
     
-          masters.map((item,index)=>{
-                Users.push( Utils.getAllMasterusers(item.userName));
-                  });
+          masters.map((item,index)=>{   
+                Users.push(Utils.getAllMasterusers(item.userName));
+            });
     
           Promise.all(Users).then((Data)=>{
-                
+               // console.log(Data)
             let bettingData = []
             var mergedData = [].concat.apply([], Data);
             mergedData.map((item,index)=>{
@@ -1354,7 +1378,9 @@ exports.adminUserPL = async (req,res) =>{
                 var cricketProfit =0;
                 var soccerProfit = 0;
                 var tennisProfit = 0;
+                var mCommision = 0;
                   item.map((childItem)=>{
+                    mCommision = mCommision + childItem.mCommision;
                     if(childItem.marketType=="Fancy"){
                         fancyprofit = fancyprofit + childItem.P_L
                     }
@@ -1372,11 +1398,13 @@ exports.adminUserPL = async (req,res) =>{
                 var master = await Utils.getMyprofile(item[0].clientName);
                 object.master = master.master
                 admin = await Utils.getMyprofile(master.master);
+                object.Commission = admin.Commission;
                 object.admin =  admin.admin
                 object.fancyProfitLoss = fancyprofit
                 object.cricketProfit = cricketProfit
                 object.soccerProfit = soccerProfit
                 object.tennisProfit = tennisProfit
+                object.mCommision = mCommision;
                 return object
                 })
                      finaloriginal.push(finalobject);
@@ -1412,19 +1440,23 @@ exports.adminUserPL = async (req,res) =>{
                                     var soccerPL = 0;
                                     var fancyPL = 0;
                                     var masterPL = 0;
+                                    var mCommision = 0;
                                     item.map((childitem)=>{
                                         masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
                                         cricketPL = cricketPL + childitem.cricketProfit;
                                         tennisPL = tennisPL + childitem.tennisProfit;
                                         soccerPL = soccerPL + childitem.soccerProfit;
                                         fancyPL = fancyPL + childitem.fancyProfitLoss;
+                                        mCommision = mCommision+ childitem.mCommision;
                                     })
 
-                                    masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.master = item[0].master;
+                                    masterProfitloss.Commission = item[0].Commission;
                                     masterProfitloss.profitLoss = masterPL
                                     masterProfitloss.cricketPL = cricketPL;
                                     masterProfitloss.tennisPL = tennisPL;
                                     masterProfitloss.soccerPL = soccerPL;
+                                    masterProfitloss.mCommision = mCommision;
                                     masterProfitloss.fancyprofitLoss = fancyPL;
 
 
@@ -1641,7 +1673,9 @@ exports.adminUserPL = async (req,res) =>{
                         var cricketProfit =0;
                         var soccerProfit = 0;
                         var tennisProfit = 0;
+                        var mCommision = 0;
                        item.map((childItem)=>{
+                           mCommision = mCommision + childItem.mCommision;
                         if(childItem.marketType=="Fancy"){
                             fancyprofit = fancyprofit + childItem.P_L
                         }
@@ -1663,7 +1697,8 @@ exports.adminUserPL = async (req,res) =>{
                         object.fancyProfitLoss = fancyprofit
                         object.cricketProfit = cricketProfit
                         object.soccerProfit = soccerProfit
-                        object.tennisProfit = tennisProfit
+                        object.tennisProfit = tennisProfit;
+                        object.mCommision = mCommision;
                         return object
                         })
                          
@@ -1695,12 +1730,14 @@ exports.adminUserPL = async (req,res) =>{
                                     var soccerPL = 0;
                                     var fancyPL = 0;
                                     var masterPL = 0;
+                                    var mCommision = 0;
                                     item.map((childitem)=>{
                                         masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
                                         cricketPL = cricketPL + childitem.cricketProfit;
                                         tennisPL = tennisPL + childitem.tennisProfit;
                                         soccerPL = soccerPL + childitem.soccerProfit;
                                         fancyPL = fancyPL + childitem.fancyProfitLoss;
+                                        mCommision = mCommision+ childitem.mCommision;
                                     })
 
                                     masterProfitloss.admin = item[0].admin;
@@ -1709,6 +1746,7 @@ exports.adminUserPL = async (req,res) =>{
                                     masterProfitloss.tennisPL = tennisPL;
                                     masterProfitloss.soccerPL = soccerPL;
                                     masterProfitloss.fancyprofitLoss = fancyPL;
+                                    masterProfitloss.mCommision = mCommision;
 
 
                                     // return item.master: masterPL
@@ -2746,7 +2784,79 @@ exports.getAllFancyStack = async (req, res) => {  // get total stack of user in 
           });
 
     } catch (err) {
-        console.log(err)
         return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+    }
+}
+
+exports.storeMatchOddsCron = async (req, res) => {
+    try {
+        DB.event.distinct('eventId',{'active':true}).then(data => {
+            DB.matchRunner.distinct('marketId', {eventId:{'$in': data}}).then(ids => {
+                ids.map(e => {
+                    let marketID = e;
+                    Request.get({
+                        "headers": { "content-type": "application/json" },
+                        "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+                        "qs": {"market_id": marketID}
+                    }, (error, response, body) => {
+                        if(error) {
+                            return console.log(error);
+                        }
+                        if(body.length !=0){
+                            const bodyData = JSON.parse(body);
+                            bodyData.map(d => {
+                                d.runners.map(m => {
+                                    let back = m.ex.availableToBack[0].price;
+                                    let lay = m.ex.availableToLay[0].price;
+                                    let selectionId = m.selectionId;
+                                    DB.matchRunner.findOneAndUpdate({selectionId: selectionId}, {$set: {backOdds: back, layOdds: lay}}).then(done => {});
+                                })
+                            })
+                        } else {
+                            console.log("data is not coming from listMarketBookOdds Marketid: "+marketID+"");
+                        }
+                    });
+                })
+            })
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
+    }
+}
+
+exports.storeMatchOdds = async(req, res) => {
+    try {
+        let marketId = req.body.marketId;
+        if (!marketId){
+            return res.status({success: false, message:'kindly share the marketid'});
+        }
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": marketId}
+        }, (error, response, body) => {
+            if(error) {
+                return console.log(error);
+            }
+            if(body.length !=0){
+                const bodyData = JSON.parse(body);
+                bodyData.map(d => {
+                    d.runners.map((m, i) => {
+                        let back = m.ex.availableToBack[0].price;
+                        let lay = m.ex.availableToLay[0].price;
+                        let selectionId = m.selectionId;
+                        DB.matchRunner.findOneAndUpdate({selectionId: selectionId}, {$set: {backOdds: back, layOdds: lay}}).then(done => {
+                            if(d.runners.length == i+1){
+                                return res.status(200).json({ status: 'Success', "data": 'Match odds have been updated successfully'});
+                            }
+                        });
+                    })
+                })
+            } else {
+                console.log("data is not coming from listMarketBookOdds Marketid: "+marketID+"");
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
     }
 }

@@ -62,10 +62,10 @@ module.exports = function(router) {
     router.post('/listMarketType', Token.checkToken, Auth.listMarketType);
 
     //defined routing for database store Api
-    router.post('/storeLiveEvents',Token.checkToken,Auth.storeLiveEvents);
-    router.post('/storeMarketType',Token.checkToken, Auth.storeMarketType);
+    router.post('/storeLiveEvents',Auth.storeLiveEvents);
+    router.post('/storeMarketType', Auth.storeMarketType);
     router.post('/ActiveLiveEvents',Token.checkToken, Auth.ActiveLiveEvents);
-    router.get('/LiveEventsForUser',Token.checkToken, Auth.LiveEventsForUser);
+    router.get('/LiveEventsForUser', Auth.LiveEventsForUser);
     router.post('/getDbliveEvents',Token.checkToken, Auth.getDbliveEvents);
     
 
@@ -165,5 +165,7 @@ module.exports = function(router) {
     router.get('/getChipsData', Token.checkToken, Auth.getChipsData);
     router.post('/getLiveMatchOdds', Token.checkToken, Auth.getLiveMatchOdds);
     router.post('/getAllFancyStack', Token.checkToken, Auth.getAllFancyStack);
+    router.get('/storeMatchOddsCron',Auth.storeMatchOddsCron);
+    router.put('/storeMatchOdds',Token.checkToken, Auth.storeMatchOdds);
     
     }
