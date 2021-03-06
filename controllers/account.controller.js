@@ -2421,6 +2421,7 @@ exports.superAdminProfitAndLoss = async (req, res) => {
                         })
                         object.data = item;
                         object.marketID = item[0].marketID
+                        object.eventType = item[0].eventType
                         object.ProfitLoss = profitLoss
                         finalobject.push(object)
 
