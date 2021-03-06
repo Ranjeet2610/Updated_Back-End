@@ -869,7 +869,7 @@ exports.storeFancyOddsCron = (req, res) => {
                     body.map((item,index)=>{
                         DB.FancyOdds.find({eventId: eventIds, marketId:item.SelectionId}, function(err, data){
                             if(err){
-                                console.log(err);
+                               // console.log(err);
                             }
                             if(data.length >0){
                                 let cond = {eventId: eventIds,marketId:item.SelectionId};
@@ -898,7 +898,7 @@ exports.storeFancyOddsCron = (req, res) => {
                                         console.log(err); 
                                     } 
                                     else{ 
-                                        console.log(result) 
+                                       // console.log(result) 
                                     } 
                                 }) 
                                 var FancyRunner = new DB.FancyRunner({
@@ -911,7 +911,7 @@ exports.storeFancyOddsCron = (req, res) => {
                                         console.log(err); 
                                     } 
                                     else{ 
-                                        console.log(result) 
+                                        //console.log(result) 
                                     } 
                                 }) 
                             }

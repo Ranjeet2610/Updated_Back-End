@@ -1463,160 +1463,400 @@ exports.getUserProfitAndLoss = (req, res) => {
 // }
 
 exports.matchOddsBetSettlement = async (req, res) => {
+    console.log(req.body);
     let winnerSelectionId = req.body.selectionId;
     let winnerTeam = req.body.winnerTeam;
     let _eventId = req.body.eventId;
     let marketId = req.body.marketId;
+    let Teamone = req.body.selectionOne;
+    let Teamtwo = req.body.selectionTwo;
+    let Teamthree = req.body.selectionThree;
+    let userSet = [];
     if(!winnerSelectionId || !marketId) {
         res.send({status:false, message:"Kindly share the selectionid or marketId"});
     }
     let settleQuery = {eventId: _eventId};
     let updatedvals = {$set: {settledValue: winnerSelectionId, settlementStatus: 'settled'}};
-    DB.event.updateOne(settleQuery, updatedvals).then(data => {
-    });
+    DB.event.updateOne(settleQuery, updatedvals).then(data => {});
     DB.betting.find({ status: "open", marketID: marketId }).then((openBets) => {
-        openBets.map((item3, index) => {
+        openBets.map(async(item3, index) => {
             if (item3.selectionID == winnerSelectionId && item3.bettype === "Back") {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: {  exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        DB.user.findOne({userName: userUpdated.master}).then(masterData => {
-                            let commission = masterData.Commission;
-                            let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
-                            item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
-                            userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
-                            userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
-                            DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
-                                d.mCommision = commValue;
-                                d.save();
-                            });
-                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                if (userAccount) {
-                                    var withdraw = new DB.deposit({
-                                        userName: userUpdated.userName,
-                                        accountHolderName: userUpdated,
-                                        amount: item3.profit,
-                                        balance: userUpdated.walletBalance
-
-                                    })
-
-                                    withdraw.save()
-                                    userAccount.withdrawTransaction.push(withdraw)
-                                    userAccount.lastWithdrawDate = new Date()
-                                    userAccount.save()
-                                    userUpdated.save().then((saved) => {
-                                        item3.status = "settled";
-                                        item3.P_L = item3.profit;
-                                        item3.settledValue = winnerTeam;
-                                        item3.save()
-
-                                    })
-
-                                }
-                            })
-
+                        userUpdated.save().then((saved) => {
+                            item3.settledValue = winnerTeam;
+                            item3.P_L = item3.profit;
+                            item3.save
                         })
-                        
                     }
                 })
             } else if (item3.selectionID == winnerSelectionId && item3.bettype === "Lay") {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                            if (userAccount) {
-                                var withdraw = new DB.withdraw({
-                                    userName: userUpdated.userName,
-                                    accountHolderName: userUpdated,
-                                    amount: item3.liability,
-                                    balance: userUpdated.walletBalance
-
-                                })
-
-                                withdraw.save()
-                                userAccount.withdrawTransaction.push(withdraw)
-                                userAccount.lastWithdrawDate = new Date()
-                                userAccount.save()
-                                userUpdated.save().then((saved) => {
-                                    item3.status = "settled";
-                                    item3.P_L = -item3.liability;
-                                    item3.settledValue = winnerTeam;
-                                    item3.save()
-
-                                })
-
-                            }
+                        userUpdated.save().then((saved) => {
+                            item3.P_L = -item3.liability;
+                            item3.settledValue = winnerTeam;
+                            item3.save();
                         })
                     }
                 })
             } else if (item3.selectionID != winnerSelectionId && item3.bettype === "Lay") {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        DB.user.findOne({userName: userUpdated.master}).then(masterData => {
-                            let commission = masterData.Commission;
-                            let commValue = parseFloat(item3.profit)*(parseFloat(commission)/100);
-                            item3.profit = parseFloat(item3.profit)-parseFloat(commValue);
-                            userUpdated.walletBalance = parseFloat(userUpdated.walletBalance) + parseFloat(item3.liability) + parseFloat(item3.profit);
-                            userUpdated.profitLossChips = parseFloat(userUpdated.profitLossChips)+ parseFloat(item3.profit);
-                            DB.betting.findOneAndUpdate({ _id: item3._id }).then(d => {
-                                d.mCommision = commValue;
-                                d.save();
-                            });
-                            DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                                if (userAccount) {
-                                    var deposit = new DB.deposit({
-                                        userName: userUpdated.userName,
-                                        accountHolderName: userUpdated,
-                                        amount: item3.profit,
-                                        balance: userUpdated.walletBalance
-
-                                    })
-
-                                    deposit.save()
-                                    userAccount.depositTransaction.push(deposit)
-                                    lastDepositDate = new Date()
-                                    userAccount.save()
-                                    userUpdated.save().then((saved) => {
-                                        item3.status = "settled";
-                                        item3.P_L = item3.profit;
-                                        item3.settledValue = winnerTeam;
-                                        item3.save()
-
-
-                                    })
-
-                                }
-                            })
+                        userUpdated.save().then((saved) => {
+                            item3.settledValue = winnerTeam;
+                            item3.P_L = item3.profit;
+                            item3.save()
                         })
                     }
                 })
             } else {
-                DB.user.findOneAndUpdate({ userName: item3.clientName }, { $inc: { profitLossChips: -item3.liability, exposure: -parseFloat(item3.liability) } }, { new: true, upsert: true }).then((userUpdated) => {
+                DB.user.findOneAndUpdate({ userName: item3.clientName }, { new: true, upsert: true }).then((userUpdated) => {
                     if (userUpdated) {
-                        DB.account.findOne({ userName: userUpdated.userName }).then((userAccount) => {
-                            if (userAccount) {
-                                var withdraw = new DB.withdraw({
-                                    userName: userUpdated.userName,
-                                    accountHolderName: userUpdated,
-                                    amount: item3.liability,
-                                    balance: userUpdated.walletBalance
-
-                                })
-
-                                withdraw.save()
-                                userAccount.withdrawTransaction.push(withdraw)
-                                userAccount.lastWithdrawDate = new Date()
-                                userAccount.save()
-                                userUpdated.save().then((saved) => {
-                                    item3.status = "settled";
-                                    item3.P_L = -item3.liability;
-                                    item3.settledValue = winnerTeam;
-                                    item3.save()
-
-                                })
-
-                            }
-
+                        userUpdated.save().then((saved) => {
+                            item3.P_L = -item3.liability;
+                            item3.settledValue = winnerTeam;
+                            item3.save();
                         })
+                
                     }
+                })
+            }
+            if(openBets.length == index + 1){
+                DB.betting.find({status: "open", marketID: marketId}).then(data => {
+                    data.map((item, i)=>{
+                        console.log(item);
+                            let T1TotalPL = 0;
+                            let T2TotalPL = 0;
+                            let T3TotalPL = 0;
+    
+                        if(item.bettype=='Back'){
+                            if(Teamone==item.selectionID){
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.stack);
+                            }
+                            if(Teamtwo==item.selectionID){
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.P_L);
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.stack);
+                            }
+                            if(Teamthree==item.selectionID){
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.stack);
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.stack);
+                            }
+                        }else{
+                            if(Teamone==item.selectionID){
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.stack);
+                            }
+                            if(Teamtwo==item.selectionID){
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.P_L);
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.stack);
+                            }
+                            if(Teamthree==item.selectionID){
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.stack);
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.stack);
+                            }
+                        }
+                            
+                        item.status = 'settled';
+                        item.save();
+                       
+                        if (userSet.length == 0) {
+                            let d = {userName: item.clientName, winnerTeam: winnerSelectionId, runners: {Teamone: Teamone, T1TotalPL: T1TotalPL, Teamtwo: Teamtwo, T2TotalPL: T2TotalPL, Teamthree: Teamthree, T3TotalPL: T3TotalPL}};
+                            userSet.push(d);
+                        } else {
+                            let existed = false;
+                            userSet.map(d => {
+                                if(d.userName == item.clientName){
+                                    existed = true;
+                                }
+                            });
+                            userSet.map(r =>{
+                                if(r.userName == item.clientName){
+                                    r.runners.T1TotalPL = parseFloat(r.runners.T1TotalPL) + parseFloat(T1TotalPL);
+                                    r.runners.T2TotalPL = parseFloat(r.runners.T2TotalPL) + parseFloat(T2TotalPL);
+                                    r.runners.T3TotalPL = parseFloat(r.runners.T3TotalPL) + parseFloat(T3TotalPL);
+                                } else if(existed == false){
+                                    let ds = {userName: item.clientName, winnerTeam: winnerSelectionId, runners: {Teamone: Teamone, T1TotalPL: T1TotalPL, Teamtwo: Teamtwo, T2TotalPL: T2TotalPL, Teamthree: Teamthree, T3TotalPL: T3TotalPL}};
+                                    userSet.push(ds);
+                                }
+                            });
+                        }
+                        if(data.length == i + 1){
+                            console.log(userSet);
+                            userSet.map(e => {
+                                DB.user.findOne({userName:e.userName}).then(userData => {
+                                   console.log(userData);
+                                    DB.user.findOne({userName: userData.master}).then(masterD => {
+                                        DB.account.findOne({ userName: e.userName }).then((userAccount) => {
+                                            console.log(userAccount);
+                                            let commission = masterD.Commission;
+                                        if(e.runners.Teamthree != 'undefined'){
+                                            if(e.runners.Teamone == winnerSelectionId){
+                                                let sign = Math.sign(e.runners.T1TotalPL);
+                                                let profit_loss;
+                                                if(sign != -1){
+                                                let commValue = parseFloat(e.runners.T1TotalPL)*(parseFloat(commission)/100);
+                                                console.log(commValue);
+                                                let profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
+                                                userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
+                                                
+                                                } else {
+                                                    profit_loss =  e.runners.T1TotalPL;
+                                                }
+                                                userData.profitLossChips = parseFloat(userData.profitLossChips)+ parseFloat(profit_loss);
+                                                if(parseFloat(e.runners.T3TotalPL) < parseFloat(e.runners.T2TotalPL)){
+                                                    // parseFloat(e.runners.T3TotalPL) is negative value and we have to add it into mainn balance
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T3TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T3TotalPL);
+                                                } else{
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T2TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T2TotalPL);
+                                                }
+                                            
+                                                if (userAccount) {
+                                                    let sign = Math.sign(e.runners.T1TotalPL);
+                                                    let AccData = {
+                                                        userName: e.userName,
+                                                        accountHolderName: userData,
+                                                        amount: profit_loss,
+                                                        balance: userData.walletBalance
+                                                    }
+                                                    if (sign == -1){
+                                                        var withdraw = new DB.withdraw(AccData);
+                                                        withdraw.save()
+                                                        userAccount.withdrawTransaction.push(withdraw)
+                                                        userAccount.lastWithdrawDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    } else {
+                                                        var deposit = new DB.deposit(AccData)
+                                                        deposit.save()
+                                                        userAccount.depositTransaction.push(deposit)
+                                                        lastDepositDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    }
+                                                }
+                                                    
+                                            } else if (e.runners.Teamtwo == winnerSelectionId){
+                                                let sign = Math.sign(e.runners.T2TotalPL);
+                                                let profit_loss;
+                                                if(sign != -1){
+                                                let commValue = parseFloat(e.runners.T2TotalPL)*(parseFloat(commission)/100);
+                                                console.log(commValue);
+                                                let profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
+                                                userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
+                                                
+                                                } else {
+                                                    profit_loss =  e.runners.T2TotalPL;
+                                                }
+                                                userData.profitLossChips = parseFloat(userData.profitLossChips)+ parseFloat(profit_loss);
+                                                if(parseFloat(e.runners.T3TotalPL) < parseFloat(e.runners.T1TotalPL)){
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T3TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T3TotalPL);
+                                                } else{
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T1TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T1TotalPL);
+                                                }
+                                                if (userAccount) {
+                                                    let sign = Math.sign(e.runners.T2TotalPL);
+                                                    let AccData = {
+                                                        userName: e.userName,
+                                                        accountHolderName: userData,
+                                                        amount: profit_loss,
+                                                        balance: userData.walletBalance
+                                                    }
+                                                    if (sign == -1){
+                                                        var withdraw = new DB.withdraw(AccData);
+                                                        withdraw.save()
+                                                        userAccount.withdrawTransaction.push(withdraw)
+                                                        userAccount.lastWithdrawDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    } else {
+                                                        var deposit = new DB.deposit(AccData)
+                                                        deposit.save()
+                                                        userAccount.depositTransaction.push(deposit)
+                                                        lastDepositDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    }
+                                                }
+                                            } else if (e.runners.Teamthree == winnerSelectionId) {
+                                                let sign = Math.sign(e.runners.T3TotalPL);
+                                                let profit_loss;
+                                                if(sign != -1){
+                                                let commValue = parseFloat(e.runners.T3TotalPL)*(parseFloat(commission)/100);
+                                                console.log(commValue);
+                                                let profit_loss = parseFloat(e.runners.T3TotalPL)-parseFloat(commValue);
+                                                userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
+                                                } else {
+                                                    profit_loss =  e.runners.T3TotalPL;
+                                                }
+                                                userData.profitLossChips = parseFloat(userData.profitLossChips)+ parseFloat(profit_loss);
+                                                if(parseFloat(e.runners.T2TotalPL) < parseFloat(e.runners.T1TotalPL)){
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T2TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T2TotalPL);
+                                                } else{
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T1TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T1TotalPL);
+                                                }
+                                                if (userAccount) {
+                                                    let sign = Math.sign(e.runners.T3TotalPL);
+                                                    let AccData = {
+                                                        userName: e.userName,
+                                                        accountHolderName: userData,
+                                                        amount: profit_loss,
+                                                        balance: userData.walletBalance
+                                                    }
+                                                    if (sign == -1){
+                                                        var withdraw = new DB.withdraw(AccData);
+                                                        withdraw.save()
+                                                        userAccount.withdrawTransaction.push(withdraw)
+                                                        userAccount.lastWithdrawDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    } else {
+                                                        var deposit = new DB.deposit(AccData)
+                                                        deposit.save()
+                                                        userAccount.depositTransaction.push(deposit)
+                                                        lastDepositDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    }
+                                                    
+                                                }
+                                                
+                                            }
+                                        } else {
+                                                if(e.runners.Teamone == winnerSelectionId){
+                                                    let sign = Math.sign(e.runners.T1TotalPL);
+                                                    let profit_loss;
+                                                    if(sign != -1){
+                                                    let commValue = parseFloat(e.runners.T1TotalPL)*(parseFloat(commission)/100);
+                                                    console.log(commValue);
+                                                    let profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
+                                                } else {
+                                                    profit_loss =  e.runners.T1TotalPL;
+                                                }
+                                                userData.profitLossChips = parseFloat(userData.profitLossChips)+ parseFloat(profit_loss);
+                                                if(parseFloat(e.runners.T1TotalPL) < parseFloat(e.runners.T2TotalPL)){
+                                                    // parseFloat(e.runners.T3TotalPL) is negative value and we have to add it into mainn balance
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T1TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T1TotalPL);
+                                                } else{
+                                                    if(sign != -1){
+                                                    userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T2TotalPL);
+                                                    }
+                                                    userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T2TotalPL);
+                                                }
+                                                if (userAccount) {
+                                                    let sign = Math.sign(e.runners.T1TotalPL);
+                                                    let AccData = {
+                                                        userName: e.userName,
+                                                        accountHolderName: userData,
+                                                        amount: profit_loss,
+                                                        balance: userData.walletBalance
+                                                    }
+                                                    if (sign == -1){
+                                                        var withdraw = new DB.withdraw(AccData);
+                                                        withdraw.save()
+                                                        userAccount.withdrawTransaction.push(withdraw)
+                                                        userAccount.lastWithdrawDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    } else {
+                                                        var deposit = new DB.deposit(AccData)
+                                                        deposit.save()
+                                                        userAccount.depositTransaction.push(deposit)
+                                                        lastDepositDate = new Date()
+                                                        userAccount.save();
+                                                        userData.save();
+                                                    }
+                                                    
+                                                }
+                                            
+                                        } else if (e.runners.Teamtwo == winnerSelectionId){
+                                            let sign = Math.sign(e.runners.T2TotalPL);
+                                            let profit_loss;
+                                            if(sign != -1){
+                                            let commValue = parseFloat(e.runners.T2TotalPL)*(parseFloat(commission)/100);
+                                            console.log(commValue);
+                                            let profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
+                                            userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
+                                            }else {
+                                                profit_loss =  e.runners.T2TotalPL;
+                                            }
+                                            userData.profitLossChips = parseFloat(userData.profitLossChips)+ parseFloat(profit_loss);
+                                            if(parseFloat(e.runners.T2TotalPL) < parseFloat(e.runners.T1TotalPL)){
+                                                if(sign != -1){
+                                                userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T2TotalPL);
+                                                }
+                                                userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T2TotalPL);
+                                            } else{
+                                                if(sign != -1){
+                                                userData.walletBalance = parseFloat(userData.walletBalance) - parseFloat(e.runners.T1TotalPL);
+                                                }
+                                                userData.exposure = parseFloat(userData.exposure) + parseFloat(e.runners.T1TotalPL);
+                                            }
+                                            if (userAccount) {
+                                                let sign = Math.sign(e.runners.T2TotalPL);
+                                                let AccData = {
+                                                    userName: e.userName,
+                                                    accountHolderName: userData,
+                                                    amount: profit_loss,
+                                                    balance: userData.walletBalance
+                                                }
+                                                if (sign == -1){
+                                                    var withdraw = new DB.withdraw(AccData);
+                                                    withdraw.save();
+                                                    userAccount.withdrawTransaction.push(withdraw)
+                                                    userAccount.lastWithdrawDate = new Date()
+                                                    userAccount.save();
+                                                    userData.save();
+                                                } else {
+                                                    var deposit = new DB.deposit(AccData)
+                                                    deposit.save()
+                                                    userAccount.depositTransaction.push(deposit)
+                                                    lastDepositDate = new Date()
+                                                    userAccount.save();
+                                                    userData.save();
+                                                }
+                                                
+                                            }
+                                        
+                                        }
+                                    }
+                                    })
+                                })
+                                console.log(userData);
+                                
+                                })
+                            })
+                        }
+                    })
                 })
             }
         })
