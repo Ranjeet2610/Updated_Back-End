@@ -2214,6 +2214,7 @@ exports.getUserSectionProfitAndLoss = async (req, res) => {
                 })
                 obj.data = item;
                 obj.ProfitLoss = profitLoss
+                obj.eventType = item[0].eventType
                 finalobj.push(obj)
 
             })
@@ -2510,6 +2511,7 @@ exports.masterProfitAndLoss = async (req, res) => {
                         object.data = item;
                         object.marketID = item[0].marketID
                         object.ProfitLoss = profitLoss
+                        object.eventType = item[0].eventType
                         finalobject.push(object)
 
                     })
