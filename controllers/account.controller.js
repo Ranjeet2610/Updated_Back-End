@@ -1604,9 +1604,8 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                                 if(sign != -1){
                                                 let commValue = parseFloat(e.runners.T1TotalPL)*(parseFloat(commission)/100);
                                                 console.log(commValue);
-                                                let profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
+                                                profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
                                                 userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
-                                                
                                                 } else {
                                                     profit_loss =  e.runners.T1TotalPL;
                                                 }
@@ -1655,7 +1654,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                                 if(sign != -1){
                                                 let commValue = parseFloat(e.runners.T2TotalPL)*(parseFloat(commission)/100);
                                                 console.log(commValue);
-                                                let profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
+                                                profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
                                                 userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
                                                 
                                                 } else {
@@ -1703,7 +1702,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                                 if(sign != -1){
                                                 let commValue = parseFloat(e.runners.T3TotalPL)*(parseFloat(commission)/100);
                                                 console.log(commValue);
-                                                let profit_loss = parseFloat(e.runners.T3TotalPL)-parseFloat(commValue);
+                                                profit_loss = parseFloat(e.runners.T3TotalPL)-parseFloat(commValue);
                                                 userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
                                                 } else {
                                                     profit_loss =  e.runners.T3TotalPL;
@@ -1754,7 +1753,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                                     if(sign != -1){
                                                     let commValue = parseFloat(e.runners.T1TotalPL)*(parseFloat(commission)/100);
                                                     console.log(commValue);
-                                                    let profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
+                                                    profit_loss = parseFloat(e.runners.T1TotalPL)-parseFloat(commValue);
                                                     userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
                                                 } else {
                                                     profit_loss =  e.runners.T1TotalPL;
@@ -1804,7 +1803,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                                             if(sign != -1){
                                             let commValue = parseFloat(e.runners.T2TotalPL)*(parseFloat(commission)/100);
                                             console.log(commValue);
-                                            let profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
+                                            profit_loss = parseFloat(e.runners.T2TotalPL)-parseFloat(commValue);
                                             userData.walletBalance = parseFloat(userData.walletBalance) + parseFloat(profit_loss);
                                             }else {
                                                 profit_loss =  e.runners.T2TotalPL;
