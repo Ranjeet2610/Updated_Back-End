@@ -129,7 +129,6 @@ var accountSchema = new mongoose.Schema({
 
 var bettingSchema = new mongoose.Schema({
   createdAt: {type:String, default: new Date().toISOString().substring(0, 10)},
-  createdDate  :{type:Date, default: new Date().toISOString()},
   clientName:{type:String,required:true},
   userid:{type: mongoose.Schema.Types.ObjectId, ref: 'user'},
   IP:{type:String},
@@ -152,7 +151,7 @@ var bettingSchema = new mongoose.Schema({
   eventType: {type:Number,default:0},
   mCommision:{type:Number,default:0},
   settledValue: {type:String, defualt: 0}
-},{ timestamps: true })
+},{timestamps: { createdAt: 'createdDate' }})
 // event data
 
 var eventSchema = new mongoose.Schema({

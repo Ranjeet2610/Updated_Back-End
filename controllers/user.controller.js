@@ -1280,14 +1280,16 @@ exports.userPL = async (req,res)=>{
                         mCommision = mCommision + childItem.mCommision;
                         if(childItem.marketType=="Fancy"){
                             fancyprofit = fancyprofit + childItem.P_L
+                        } else {
+                            if (childItem.eventType == 4) {
+                                cricketProfit = cricketProfit+ childItem.P_L
+                            } else if (childItem.eventType == 2) {
+                                tennisProfit = tennisProfit+ childItem.P_L
+                            } else if(childItem.eventType == 1) {
+                                soccerProfit = soccerProfit+ childItem.P_L
+                            }
                         }
-                        if (childItem.eventType == 4) {
-                            cricketProfit = cricketProfit+ childItem.P_L
-                        } else if (childItem.eventType == 2) {
-                            tennisProfit = tennisProfit+ childItem.P_L
-                        } else if(childItem.eventType == 1) {
-                            soccerProfit = soccerProfit+ childItem.P_L
-                        }
+                        
         
                        })
                     //    object.data =item;
@@ -1383,14 +1385,16 @@ exports.adminUserPL = async (req,res) =>{
                     mCommision = mCommision + childItem.mCommision;
                     if(childItem.marketType=="Fancy"){
                         fancyprofit = fancyprofit + childItem.P_L
+                    } else {
+                        if (childItem.eventType == 4) {
+                            cricketProfit = cricketProfit+ childItem.P_L
+                        } else if (childItem.eventType == 2) {
+                            tennisProfit = tennisProfit+ childItem.P_L
+                        } else if(childItem.eventType == 1) {
+                            soccerProfit = soccerProfit+ childItem.P_L
+                        }
                     }
-                    if (childItem.eventType == 4) {
-                        cricketProfit = cricketProfit+ childItem.P_L
-                    } else if (childItem.eventType == 2) {
-                        tennisProfit = tennisProfit+ childItem.P_L
-                    } else if(childItem.eventType == 1) {
-                        soccerProfit = soccerProfit+ childItem.P_L
-                    }
+                   
     
                    })
                 //    object.data =item;
@@ -1678,14 +1682,16 @@ exports.adminUserPL = async (req,res) =>{
                            mCommision = mCommision + childItem.mCommision;
                         if(childItem.marketType=="Fancy"){
                             fancyprofit = fancyprofit + childItem.P_L
+                        } else {
+                            if (childItem.eventType == 4) {
+                                cricketProfit = cricketProfit+ childItem.P_L
+                            } else if (childItem.eventType == 2) {
+                                tennisProfit = tennisProfit+ childItem.P_L
+                            } else if(childItem.eventType == 1) {
+                                soccerProfit = soccerProfit+ childItem.P_L
+                            }
                         }
-                        if (childItem.eventType == 4) {
-                            cricketProfit = cricketProfit+ childItem.P_L
-                        } else if (childItem.eventType == 2) {
-                            tennisProfit = tennisProfit+ childItem.P_L
-                        } else if(childItem.eventType == 1) {
-                            soccerProfit = soccerProfit+ childItem.P_L
-                        }
+                       
         
                        })
                     //    object.data =item;
@@ -1694,6 +1700,7 @@ exports.adminUserPL = async (req,res) =>{
                         object.master = master.master
                         admin = await Utils.getMyprofile(master.master);
                         object.admin =  admin.admin
+                        object.Commission = admin.Commission;
                         object.fancyProfitLoss = fancyprofit
                         object.cricketProfit = cricketProfit
                         object.soccerProfit = soccerProfit
@@ -1741,6 +1748,7 @@ exports.adminUserPL = async (req,res) =>{
                                     })
 
                                     masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.Commission = item[0].Commission;
                                     masterProfitloss.profitLoss = masterPL
                                     masterProfitloss.cricketPL = cricketPL;
                                     masterProfitloss.tennisPL = tennisPL;
@@ -2464,7 +2472,7 @@ exports.dumpNonBettingFancy = async (req, res) => {
 exports.getUserInfo = async (req, res) => {
     try {
         let userName = req.query.userName;
-        DB.user.findOne({userName: userName}, {walletBalance:1, exposure: 1, userName: 1}).then(user =>{
+        DB.user.findOne({userName: userName}, {walletBalance:1, exposure: 1, userName: 1, profitLossChips:1, freeChips:1 }).then(user =>{
             if(user != null){
                 return res.send({status: 200, message:'Fancy list has been fatched in data', data: user});
             }

@@ -1501,7 +1501,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
     let settleQuery = {eventId: _eventId};
     let updatedvals = {$set: {settledValue: winnerSelectionId, settlementStatus: 'settled'}};
     DB.event.updateOne(settleQuery, updatedvals).then(data => {});
-    DB.betting.find({ status: "open", marketID: marketId }).then((openBets) => {
+    DB.betting.find({ status: "open", marketID: marketId, marketType: 'match odds' }).then((openBets) => {
         openBets.map(async(item3, index) => {
             if (item3.selectionID == winnerSelectionId && item3.bettype === "Back") {
                 DB.user.findOneAndUpdate({ userName: item3.clientName }, { new: true, upsert: true }).then((userUpdated) => {
@@ -1546,7 +1546,7 @@ exports.matchOddsBetSettlement = async (req, res) => {
                 })
             }
             if(openBets.length == index + 1){
-                DB.betting.find({status: "open", marketID: marketId}).then(data => {
+                DB.betting.find({status: "open", marketID: marketId, marketType: 'match odds'}).then(data => {
                     data.map((item, i)=>{
                         console.log(item);
                             let T1TotalPL = 0;
@@ -2028,7 +2028,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
     DB.FancyOdds.updateOne(settleQuery, updatedvals).then(data => {
     });
     //importFancyOddsData();
-    DB.betting.find({ status: "open", selectionID: selectionId }).then((openBets) => {
+    DB.betting.find({ status: "open", selectionID: selectionId, marketType: 'Fancy' }).then((openBets) => {
         openBets.map((item3, index) => {
             if (item3.bettype === "Back") {
                 if(item3.odds <= result) {
@@ -2310,7 +2310,7 @@ exports.adminProfitAndLoss = async (req, res) => {
                     let finalobject = [];
 
 
-                    DATA.map((item) => {
+                    DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
                         item.map((childItem) => {
@@ -2318,12 +2318,18 @@ exports.adminProfitAndLoss = async (req, res) => {
 
                         })
                         object.data = item;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
+                        object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.ProfitLoss = profitLoss
-                        finalobject.push(object)
+                        finalobject.push(object);
+                        if (DATA.length == i+1) {
+                            return res.json(finalobject)
+                        }
 
                     })
-                    return res.json(finalobject)
+                    
 
 
                 })
@@ -2391,7 +2397,7 @@ exports.superAdminProfitAndLoss = async (req, res) => {
                     let finalobject = [];
 
 
-                    DATA.map((item) => {
+                    DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
                         item.map((childItem) => {
@@ -2399,13 +2405,19 @@ exports.superAdminProfitAndLoss = async (req, res) => {
 
                         })
                         object.data = item;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
+                        object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.eventType = item[0].eventType
                         object.ProfitLoss = profitLoss
                         finalobject.push(object)
+                        if (DATA.length == i+1) {
+                            return res.json(finalobject)
+                        }
 
                     })
-                    return res.json(finalobject)
+                    
 
 
                 })
@@ -2479,7 +2491,7 @@ exports.masterProfitAndLoss = async (req, res) => {
                     let finalobject = [];
 
 
-                    DATA.map((item) => {
+                    DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
                         item.map((childItem) => {
@@ -2487,13 +2499,19 @@ exports.masterProfitAndLoss = async (req, res) => {
 
                         })
                         object.data = item;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
+                        object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.ProfitLoss = profitLoss
                         object.eventType = item[0].eventType
-                        finalobject.push(object)
+                        finalobject.push(object);
+                        if (DATA.length == i+1) {
+                            return res.json(finalobject)
+                        }
 
                     })
-                    return res.json(finalobject)
+                   
 
 
                 })
