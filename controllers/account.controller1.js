@@ -2019,16 +2019,17 @@ exports.matchOddsBetSettlement = async (req, res) => {
 
 exports.fancyOddsBetSettlement = async (req, res) => {
     let selectionId = req.body.selectionId;
+    let eventId = req.body.eventId;
     let result = req.body.result;
     if(!selectionId || !result){
         res.send({status:false, message:"Kindly share the selectionid or result"});
     }
-    let settleQuery = {marketId: selectionId};
+    let settleQuery = {marketId: selectionId, eventId: eventId};
     let updatedvals = {$set: {settledValue: result, settlementStatus: 'settled'}};
     DB.FancyOdds.updateOne(settleQuery, updatedvals).then(data => {
     });
     //importFancyOddsData();
-    DB.betting.find({ status: "open", selectionID: selectionId, marketType: 'Fancy' }).then((openBets) => {
+    DB.betting.find({ status: "open", selectionID: selectionId, marketType: 'Fancy' , eventID: eventId}).then((openBets) => {
         openBets.map((item3, index) => {
             if (item3.bettype === "Back") {
                 if(item3.odds <= result) {

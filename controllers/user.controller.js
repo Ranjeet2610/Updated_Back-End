@@ -135,9 +135,7 @@ if(result){
         'username': data.userName,
         'id':data._id
       }
-    const jsontoken = sign(user, "xyz1235",{
-        expiresIn: "1h"
-    });
+    const jsontoken = sign(user, "xyz1235");
     refreshTokens[refreshToken] = data.userName; 
     
     let query = {userName:body.userName, Master:false, Admin:false, superAdmin:false};
@@ -1695,6 +1693,7 @@ exports.adminUserPL = async (req,res) =>{
         
                        })
                     //    object.data =item;
+                   
                         object.userName = item[0].clientName
                         var master = await Utils.getMyprofile(item[0].clientName);
                         object.master = master.master
@@ -1708,65 +1707,101 @@ exports.adminUserPL = async (req,res) =>{
                         object.mCommision = mCommision;
                         return object
                         })
-                         
+                        var adminPL = [];
                          Promise.all(masterData).then(finalData=>{
                             var mergedfinalData = [].concat.apply([], finalData);
-  
-                    
-                     
-                           const masterProfitLoss = [];
-
-                           const uniquemaster = [...new Set(mergedfinalData.map(item => item.admin))]
-              
-                        uniquemaster.map((item,index)=>{
-              
-                            masterProfitLoss.push(mergedfinalData.filter((mergedfinalData)=> {
-                                  return mergedfinalData.admin == item;
-                              }));
-
-                              
-                              Promise.all(masterProfitLoss).then(finalmasterarray=>{
-                             
-                                const masterArray = [];
-                                
-                                finalmasterarray.map((item,index)=>{
-
-                                    let  masterProfitloss = {};
-                                    var cricketPL = 0;
-                                    var tennisPL = 0;
-                                    var soccerPL = 0;
-                                    var fancyPL = 0;
-                                    var masterPL = 0;
-                                    var mCommision = 0;
-                                    item.map((childitem)=>{
-                                        masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
-                                        cricketPL = cricketPL + childitem.cricketProfit;
-                                        tennisPL = tennisPL + childitem.tennisProfit;
-                                        soccerPL = soccerPL + childitem.soccerProfit;
-                                        fancyPL = fancyPL + childitem.fancyProfitLoss;
-                                        mCommision = mCommision+ childitem.mCommision;
+                            const masterProfitLoss = [];
+                            const uniquemaster = [...new Set(mergedfinalData.map(item => item.admin))];
+                            uniquemaster.map((item,index)=>{
+                                masterProfitLoss.push(mergedfinalData.filter((mergedfinalData)=> {
+                                    return mergedfinalData.admin == item;
+                                }));
+                            });
+                           // uniquemaster.map((item,index)=>{
+                                // masterProfitLoss.push(mergedfinalData.filter((mergedfinalData)=> {
+                                //     return mergedfinalData.admin == item;
+                                // }));
+                               // Promise.all(masterProfitLoss).then(finalmasterarray=>{
+                                    const masterArray = [];
+                                    
+                                    masterProfitLoss.map((item, i)=>{
+                                        item.map((childitem)=>{
+                                            var masterPL = childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
+                                            var cricketPL = childitem.cricketProfit;
+                                            var tennisPL = childitem.tennisProfit;
+                                            var soccerPL = childitem.soccerProfit;
+                                            var fancyPL = childitem.fancyProfitLoss;
+                                            var mCommision = childitem.mCommision;
+                                            if(adminPL.length == 0){
+                                                let b = {admin: childitem.admin, Commission: childitem.Commission, profitLoss : masterPL, cricketPL: cricketPL, tennisPL: tennisPL, soccerPL: soccerPL, fancyprofitLoss: fancyPL, mCommision: mCommision};
+                                                adminPL.push(b);
+                                            } else {
+                                                let existed = false;
+                                                let z = 0;
+                                                // adminPL.forEach(ds => {
+                                                //     if(ds.admin == childitem.admin){
+                                                //         existed = true;
+                                                //     }
+                                                // });
+                                                for(var k = 0; adminPL.length > k; k++){
+                                                    //console.log(adminPL[k].admin , childitem.admin, adminPL[k].admin == childitem.admin)
+                                                    if(adminPL[k].admin == childitem.admin){
+                                                        existed = true;
+                                                        z = k;
+                                                        break;
+                                                    }
+                                                }
+                                                
+                                                if(existed){
+                                                adminPL[z].profitLoss = parseFloat(adminPL[z].profitLoss)+ parseFloat(masterPL);
+                                                adminPL[z].cricketPL =  parseFloat(adminPL[z].cricketPL) +parseFloat(cricketPL);
+                                                adminPL[z].tennisPL =  parseFloat(adminPL[z].tennisPL) + parseFloat(tennisPL);
+                                                adminPL[z].soccerPL =  parseFloat(adminPL[z].soccerPL) + parseFloat(soccerPL);
+                                                adminPL[z].fancyprofitLoss =  parseFloat(adminPL[z].fancyprofitLoss) + parseFloat(fancyPL);
+                                                adminPL[z].mCommision = parseFloat(adminPL[z].mCommision)+ parseFloat(mCommision);
+                                                } else {
+                                                    let b = {admin: childitem.admin, Commission: childitem.Commission, profitLoss : masterPL, cricketPL: cricketPL, tennisPL: tennisPL, soccerPL: soccerPL, fancyprofitLoss: fancyPL, mCommision: mCommision};
+                                                    adminPL.push(b);
+                                                }
+                                                // adminPL.map(e => {
+                                                //     if(e.admin == childitem.admin){
+                                                //         e.profitLoss = parseFloat(e.profitLoss)+ parseFloat(masterPL);
+                                                //         e.cricketPL =  parseFloat(e.cricketPL) +parseFloat(cricketPL);
+                                                //         e.tennisPL =  parseFloat(e.tennisPL) + parseFloat(tennisPL);
+                                                //         e.soccerPL =  parseFloat(e.soccerPL) + parseFloat(soccerPL);
+                                                //         e.fancyprofitLoss =  parseFloat(e.fancyprofitLoss) + parseFloat(fancyPL);
+                                                //         e.mCommision = parseFloat(e.mCommision)+ parseFloat(mCommision);
+                                                //     } else if(existed  == false) {
+                                                //         let b = {admin: childitem.admin, Commission: childitem.Commission, profitLoss : masterPL, cricketPL: cricketPL, tennisPL: tennisPL, soccerPL: soccerPL, fancyprofitLoss: fancyPL, mCommision: mCommision};
+                                                //         adminPL.push(b);
+                                                //     }
+                                                // })
+                                            }
+                                            
+                                           
+                                        });
+                                        
+                                        // masterProfitloss.admin = item[0].admin;
+                                        // masterProfitloss.Commission = item[0].Commission;
+                                        // masterProfitloss.profitLoss = masterPL
+                                        // masterProfitloss.cricketPL = cricketPL;
+                                        // masterProfitloss.tennisPL = tennisPL;
+                                        // masterProfitloss.soccerPL = soccerPL;
+                                        // masterProfitloss.fancyprofitLoss = fancyPL;
+                                        // masterProfitloss.mCommision = mCommision;
+                                    
+                                    
+                                        // return item.master: masterPL
+                                        //masterArray.push(masterProfitloss);
+                                        //console.log(masterProfitLoss.length  == i+1, i, masterProfitLoss.length)
+                                        if(masterProfitLoss.length  == i+1){
+                                            return res.json({userPL:mergedfinalData,adminPL:adminPL})
+                                        }
                                     })
-
-                                    masterProfitloss.admin = item[0].admin;
-                                    masterProfitloss.Commission = item[0].Commission;
-                                    masterProfitloss.profitLoss = masterPL
-                                    masterProfitloss.cricketPL = cricketPL;
-                                    masterProfitloss.tennisPL = tennisPL;
-                                    masterProfitloss.soccerPL = soccerPL;
-                                    masterProfitloss.fancyprofitLoss = fancyPL;
-                                    masterProfitloss.mCommision = mCommision;
-
-
-                                    // return item.master: masterPL
-                                    masterArray.push(masterProfitloss);
-
-                                })
-                              
-                        return res.json({userPL:mergedfinalData,adminPL:masterArray})
-                            
-                            })
-                          })     
-
+                                    
+                                //})  
+                         // })         
+                         
                          })
         
                      })      
@@ -2429,7 +2464,7 @@ exports.getBettedFancyOdds = async (req, res) => {
             return res.send({status: false, message: 'Kindly provide the valid eventId'});
         }
         DB.betting.distinct('marketID',{eventID: eventId, settled: {"$ne":'settled'}, marketType:{"$eq":type}}).then(data => {
-            DB.FancyOdds.find({marketId: {"$in":data},"status": "CLOSED"}).then(fancyData => {
+            DB.FancyOdds.find({marketId: {"$in":data},eventId: eventId, "status": "CLOSED"}).then(fancyData => {
                 return res.send({status: 200, message:'Fancy list has been fatched in data', data: fancyData});
             })
         })

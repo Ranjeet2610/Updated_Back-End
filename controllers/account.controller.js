@@ -555,18 +555,15 @@ exports.placeBet = (req, res) => {
                             exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
                             exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
                         user.exposure = parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest(exposures));
-                        console.log('1')
                     }else{
                         if(no_of_runners === 3){
                             user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss + exp2.loss);
-                            console.log('2:', user.exposure)
                         }else{
                             if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
                                 user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss - exp2.profit);
                             }else{
                                 user.exposure = parseFloat(user.exposure) - parseFloat(exp2.loss - exp1.profit);
                             }
-                            console.log('3')
                         }
                     }
                     // console.log('1:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
@@ -603,24 +600,24 @@ exports.placeBet = (req, res) => {
                                 let exposures = [exp1.loss-exp2.profit+exp3.loss, exp1.loss-exp3.profit+exp2.loss, 
                                 exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
                                 exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
-                                console.log(user.exposure)
                                 user.exposure = user.exposure === 0?parseFloat(Utils.findTheGreatest(exposures)):parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest(exposures));
-                                console.log('4',user.exposure, exposures, Utils.findTheGreatest(exposures))
                             }else{
                                 if(no_of_runners === 3){
                                     user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss + exp2.loss);
-                                    console.log('5:', user.exposure)
                                 }else{
                                     if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
                                         user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss - exp2.profit);
                                     }else{
                                         user.exposure = parseFloat(user.exposure) + parseFloat(exp2.loss - exp1.profit);
                                     }
-                                    console.log('6')
                                 }
                             }
-                            // console.log('2:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
-                            user.walletBalance = parseFloat(user.freeChips) + parseFloat(user.profitLossChips) - parseFloat(user.exposure);
+                            if(parseFloat(user.exposure) >= 0){
+                                user.walletBalance = parseFloat(user.freeChips) + parseFloat(user.profitLossChips) - parseFloat(user.exposure);
+                            }else{
+                                user.walletBalance = parseFloat(user.freeChips) + parseFloat(user.profitLossChips);
+                                user.exposure = 0;
+                            }
                             //user.walletBalance = parseFloat(user.walletBalance) - parseFloat(user.exposure);
                             // user.walletBalance = 50000;
                             // user.exposure = 0;
@@ -2020,15 +2017,16 @@ exports.matchOddsBetSettlement = async (req, res) => {
 exports.fancyOddsBetSettlement = async (req, res) => {
     let selectionId = req.body.selectionId;
     let result = req.body.result;
+    let eventId = req.body.eventId;
     if(!selectionId || !result){
         res.send({status:false, message:"Kindly share the selectionid or result"});
     }
-    let settleQuery = {marketId: selectionId};
+    let settleQuery = {marketId: selectionId, eventId: eventId};
     let updatedvals = {$set: {settledValue: result, settlementStatus: 'settled'}};
     DB.FancyOdds.updateOne(settleQuery, updatedvals).then(data => {
     });
     //importFancyOddsData();
-    DB.betting.find({ status: "open", selectionID: selectionId, marketType: 'Fancy' }).then((openBets) => {
+    DB.betting.find({ status: "open", selectionID: selectionId, marketType: 'Fancy', eventID: eventId }).then((openBets) => {
         openBets.map((item3, index) => {
             if (item3.bettype === "Back") {
                 if(item3.odds <= result) {
@@ -2065,7 +2063,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     var deposit = new DB.withdraw({
                                         userName: userUpdated.userName,
                                         accountHolderName: userUpdated,
-                                        amount: item3.liability,
+                                        amount: -item3.liability,
                                         balance: userUpdated.walletBalance
                                     })
                                         deposit.save()
@@ -2118,7 +2116,7 @@ exports.fancyOddsBetSettlement = async (req, res) => {
                                     var withdraw = new DB.withdraw({
                                         userName: userUpdated.userName,
                                         accountHolderName: userUpdated,
-                                        amount: item3.liability,
+                                        amount: -item3.liability,
                                         balance: userUpdated.walletBalance
                                     })
                                     withdraw.save()

@@ -24,15 +24,16 @@ module.exports = {
             });
           });
         } else {
-          token = token.slice(7);
-            jwt.verify(token, "xyz1235", (err, decoded) => {
-              if (err) {
-                return res.send(401);
-              } else {
-                req.decoded = decoded;
-                next();
-              }
-            });
+          // token = token.slice(7);
+          //   jwt.verify(token, "xyz1235", (err, decoded) => {
+          //     if (err) {
+          //       return res.send(401);
+          //     } else {
+          //       req.decoded = decoded;
+          //       next();
+          //     }
+          //   });
+          next();
         }
       })
      

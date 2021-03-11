@@ -1,5 +1,6 @@
 var Request = require("request");
 var _ = require('lodash');
+const rps = require('request-promise');
 
 
 const Utils = require('../utils/utils.user');
@@ -9,12 +10,13 @@ var properties = require('../config/config');
 
 // var Request = require("request");
 var randtoken = require('rand-token') 
-var refreshTokens = {} 
+var refreshTokens = {}
 // var DB = require('../db/user')
 
 const { hashSync, genSaltSync, compareSync } = require("bcryptjs");
 const { sign } = require("jsonwebtoken");
 const { forEachRight, result } = require("lodash");
+const { masterProfitAndLoss } = require("./account.controller");
 
 /**
  * @author: Sopra Steria
@@ -114,8 +116,13 @@ if(req.body.userName == null || req.body.userName == undefined || req.body.passw
 exports.login= function(req,res,next){
     const body = req.body;
 Utils.getUserDetailsByEmail(body.userName).then(data=>{
-
-if(data.blocked==true){
+if (data == null) {
+    return res.json({
+        success: 0,
+        data :"This user does not exist"
+    });
+}
+if(data.status==true){
 
 return res.json({ success:false,message :"user is blocked"})
 }
@@ -132,14 +139,20 @@ if(result){
         expiresIn: "1h"
     });
     refreshTokens[refreshToken] = data.userName; 
-    return res.json({
-          success: 1,
-          message :"login successfully",
-          token: jsontoken,
-          refreshToken: refreshToken,
-          data:data
-
+    
+    let query = {userName:body.userName, Master:false, Admin:false, superAdmin:false};
+    let updatedToken = {$set:{token:jsontoken}};
+    DB.user.updateOne(query, updatedToken).then((result)=>{
+        return res.json({
+            success: 1,
+            message :"login successfully",
+            token: jsontoken,
+            refreshToken: refreshToken,
+            data:data
+  
+      });
     });
+    
 } else {
     return res.json({
         success: 0,
@@ -354,7 +367,7 @@ exports.closeUser = (req,res)=>{
             }
         })
     } catch (error) {
-       return  res.send({status:false, message:"Technical Error"})
+       return res.send({status:false, message:"Technical Error"})
 
     }
 }
@@ -388,9 +401,9 @@ exports.openUser = (req,res)=>{
 
 exports.getLiveSports = async (req,res) => {
 
-    Request.post({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": "https://api.betfair.com/exchange/betting/rest/v1.0/listEventTypes/",
+    Request.get({
+        "headers": { "content-type": "application/json" },
+        "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEventTypes",
         "body": JSON.stringify({
             
                 "filter" : {}
@@ -400,7 +413,7 @@ exports.getLiveSports = async (req,res) => {
         if(error) {
             return console.log(error);
         }
-        console.log(body)
+        //console.log(body)
         const bodyData = JSON.parse(body)
         return res.send({status:true, message:"live sports data", data:bodyData})
         
@@ -412,31 +425,12 @@ exports.getLiveSports = async (req,res) => {
 //get live competitions by providing id, 1 for soccer 2 for tennis and 4 for cricket
 
 exports.getLiveCompetitions = async (req,res) => {
-    
     let EventTypeid= req.params
-   
     if (EventTypeid){
-
-
-        Request.post({
-            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-            "url": properties.BetFairAPIURL,
-            "body": JSON.stringify(
-                
-                {
-                    "params": {
-                       "filter": {
-                          "eventTypeIds": [EventTypeid]
-                        //   "CompetitionID"
-                       }
-                    },
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listCompetitions",
-                    "id": 1
-                 }
-    
-                
-         )
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
+            "qs": {"EventTypeID": EventTypeid}
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
@@ -455,32 +449,17 @@ exports.getLiveCompetitions = async (req,res) => {
 //get list events with time for a specific sport
 
 exports.getLiveEvents = async (req,res) => {
-    
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 5)
     let EventTypeid= req.body.EventTypeid
     let competitionIds= req.body.competitionIds  
-    if (competitionIds){
-
-
-        Request.post({
-            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-            "url": properties.BetFairAPIURL,
-            "body": JSON.stringify(
-                
-                {
-                    "params": {
-                       "filter": {
-                        //   "eventTypeIds": [EventTypeid],
-                        //   "eventIds": [eventIds],
-                        "competitionIds": [competitionIds]
-                       }
-                    },
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listEvents",
-                    "id": 1
-                 }
     
-                
-         )
+    if (competitionIds){
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
+            "qs": {"EventTypeID": EventTypeid, "CompetitionID": competitionIds}
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
@@ -489,40 +468,11 @@ exports.getLiveEvents = async (req,res) => {
             const bodyData = JSON.parse(body)
             return res.send({status:true, message:"live sports events", data:bodyData})
         });
-        
     }
- 
     else
     {
-
-    Request.post({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": properties.BetFairAPIURL,
-        "body": JSON.stringify(
-            
-            {
-                "params": {
-                   "filter": {
-                      "eventTypeIds": [EventTypeid]
-                   }
-                },
-                "jsonrpc": "2.0",
-                "method": "SportsAPING/v1.0/listEvents",
-                "id": 1
-             }
-
-            
-     )
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-        // console.log(body)
-        const bodyData = JSON.parse(body)
-        return res.send({status:true, message:"live sports events", data:bodyData})
-    });
-    
-
+        let data = await getEventID(EventTypeid);
+         return res.send({status:true, message:"live sports events", data:data});
     }
 
 }
@@ -530,63 +480,27 @@ exports.getLiveEvents = async (req,res) => {
 //list market type and market odds
 
 exports.listEventsDataById = async (req,res) =>{
-
     let eventIds= req.body.EventId
-    Request.post({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": properties.BetFairAPIURL,
-        "body": JSON.stringify(
-            
-            [
-                {
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listMarketCatalogue",
-                    "params": {
-                        "filter": {
-                            "eventIds": [eventIds],
-                            // "marketIds": [marketIds]
-                            
-                        },
-                        "maxResults": "200",
-                        "marketProjection": [
-                            // "COMPETITION",
-                            // "EVENT",
-                            // "EVENT_TYPE",
-                            "RUNNER_DESCRIPTION",
-                            // "RUNNER_METADATA",
-                            "MARKET_START_TIME"
-                        ]
-                    },
-                    "id": 1
-                }
-            ]
-            
-     )
-    }, (error, response, body) => {
+    Request.get({"headers": { "content-type": "application/json" },
+    "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
+    "qs": {"EventID": eventIds}
+    },(error, response, body) => {
         if(error) {
             return console.log(error);
         }
-        const marketData = JSON.parse(body)
-        marketIds = marketData[0].result[0].marketId
+        const marketData = JSON.parse(body);
+        let marketIds = '';
+        if(marketData[0].marketName == "Match Odds"){
+            marketIds = marketData[0].marketId;
+        } else if (marketData[1].marketName == "Match Odds") {
+            marketIds = marketData[1].marketId;
+        }
+        
        
-        Request.post({
-            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-            "url": properties.BetFairAPIURL,
-            "body": JSON.stringify(
-                
-                [{
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listMarketBook",
-                    "params": {
-                        "marketIds": [marketIds],
-                        "priceProjection": {
-                            "priceData": ["EX_BEST_OFFERS", "EX_TRADED"],
-                            "virtualise": "true"
-                        }
-                    },
-                    "id": 1
-                }]
-         )
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": marketIds}
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
@@ -596,101 +510,45 @@ exports.listEventsDataById = async (req,res) =>{
         });
 
     });
-    
-
-
 }
 
 // list market odds
 
 exports.listMarketOdds = async (req,res) => {
-    
-        var marketIds= req.body.marketId
-   
+    var marketIds= req.body.marketId
     if (marketIds){
-
-
-        Request.post({
-            "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-            "url": properties.BetFairAPIURL,
-            "body": JSON.stringify(
-                
-                [{
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listMarketBook",
-                    "params": {
-                        "marketIds": [marketIds],
-                        "priceProjection": {
-                            "priceData": ["EX_BEST_OFFERS", "EX_TRADED"],
-                            "virtualise": "true"
-                        }
-                    },
-                    "id": 1
-                }]
-         )
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": marketIds}
         }, (error, response, body) => {
             if(error) {
                 return console.log(error);
             }
+            //console.log(body)
             const bodyData = JSON.parse(body)
-            return res.send({status:true, message:"live market odds", data:bodyData})
+            return res.send({status:true, message:"live market odd", data:bodyData})
         });
-        
-    
-        
     }
-
 }
 
 // market types
 
 exports.listMarketType = async (req,res) => {
-    
-    
     let eventIds= req.body.eventId
-    
-
-    Request.post({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": properties.BetFairAPIURL,
-        "body": JSON.stringify(
-            
-            [
-                {
-                    "jsonrpc": "2.0",
-                    "method": "SportsAPING/v1.0/listMarketCatalogue",
-                    "params": {
-                        "filter": {
-                            "eventIds": [eventIds],
-                            // "marketIds": [marketIds]
-                            
-                        },
-                        "maxResults": "200",
-                        "marketProjection": [
-                            // "COMPETITION",
-                            // "EVENT",
-                            // "EVENT_TYPE",
-                            "RUNNER_DESCRIPTION",
-                            // "RUNNER_METADATA",
-                            "MARKET_START_TIME"
-                        ]
-                    },
-                    "id": 1
-                }
-            ]
-            
-     )
+    Request.get({"headers": { "content-type": "application/json" },
+    "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
+    "qs": {"EventID": eventIds}
     }, (error, response, body) => {
         if(error) {
             return console.log(error);
         }
         const bodyData = JSON.parse(body)
+       let data = bodyData.filter(e => e.marketName == "Match Odds")
         // var sortedObjs = _.sortBy(bodyData[0].result, 'marketId');
         // console.log(sortedObjs)
-        return res.send({status:true, message:"live sports events", data:bodyData})
+        return res.send({status:true, message:"live sports events", data: data})
     });
-    
-
 }
 
 // store event id of today and tommorow matches
@@ -704,53 +562,31 @@ exports.storeLiveEvents = async (req,res) => {
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
-  
-    Request.post({
-        "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-        "url": properties.BetFairAPIURL, 
-        "body": JSON.stringify(
+    DB.event_type.find({status:true},async function (err, events){
+        if(events){
+            for (var i = 0; i< events.length; i++){
+                let data = await getEventID(events[i].eventType);
+                data.map((item,index)=>{
+                    // console.log(item.event.id + item.event.name + item.event.openDate)
+                var event = new DB.event({
+                    eventId:item.event.id,
+                    eventName: item.event.name,
+                    OpenDate:item.event.openDate,
+                    eventType: events[i].eventType
+                
+                })
             
-            {
-                "params": {
-                   "filter": {
-                      "eventTypeIds": ["4"],
-
-                    
-                   },
-                   
-                },
-                "jsonrpc": "2.0",
-                "method": "SportsAPING/v1.0/listEvents",
-                "id": 1
-             }
-
+                event.save();
             
-     )
-    }, (error, response, body) => {
-        if(error) {
-            return console.log(error);
-        }
-        let eventsData = JSON.parse(body)
-        // console.log(eventsData)
-        eventsData.result.map((item,index)=>{
-            // console.log(item.event.id + item.event.name + item.event.openDate)
-        var event = new DB.event({
-            eventId:item.event.id,
-            eventName: item.event.name,
-            OpenDate:item.event.openDate
-
-        })
-
-        event.save().then((saved)=>{
-            if(saved){
-                res.send({status:true, message:"events stored successfully"})
+                });
+                if (events.length -1 == i) {
+                    res.send({status:true, message:"events stored successfully"})
+                }
             }
-
-
-        })
-
-        })
-    });
+        }
+    })
+    
+    
     
 }
 //change status of events
@@ -776,10 +612,29 @@ exports.ActiveLiveEvents = (req,res) =>{
 
 // activated events for user 
 exports.LiveEventsForUser = (req,res) =>{
+    // DB.event.find({active:true}).then((activeEvents)=>{
 
-    DB.event.find({active:true}).then((activeEvents)=>{
-
-        return res.send({status:true ,message:"activated events", Data:activeEvents})
+    //     return res.send({status:true ,message:"activated events", Data:activeEvents})
+    // });
+    DB.event.aggregate([
+        {$match:{ "active": true}},
+        {
+            $lookup: {
+                from: "matchrunners", 
+                localField: "eventId",
+                foreignField: "eventId",
+                as: "runners"
+              }
+        },
+        {
+            $project: {
+                '__v': 0,
+                'runners.__v':0
+            }
+        }
+        
+    ]).then(data => {
+        return res.send({status:true ,message:"activated events", Data:data})
     })
 
 }
@@ -789,7 +644,10 @@ exports.marketTypeData= (req,res) =>{
 const fobject= {};
 
     DB.matchOdds.find({eventId:req.body.eventId}).then((marketType)=>{
-
+        if(marketType[0] == undefined){
+            return res.send({status:1,message:"market type and runners",data:[]})
+           }
+   
         // console.log(marketType[0])
         //marketType[0].test = 12; 
         fobject.marketData = marketType[0]
@@ -807,45 +665,61 @@ const fobject= {};
 // fancy data
 
 exports.fancyMarketTypeData= async (req,res) =>{
-    
-  
-       await DB.FancyOdds.find({eventId:req.body.eventId}).then((marketType)=>{
-    
-            const fanceydata =[];
-      var datafancy = marketType.map(async(item)=>{
+    // DB.event.findOne({eventId: req.body.eventId}).then(eventData => {
+    //     updateScoreCard(eventData.eventName);
+    // })    
+    DB.FancyOdds.find({eventId: req.body.eventId}).then(FancyData => {
+        let marketIds = []; 
+        FancyData.map(e=> marketIds.push(e.marketId));
+        let eventId = req.body.eventId;
+        let options = {
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookSession",
+            "qs": {"match_id": eventId},
+            json: true
+        }
+        Request(options, function (error, response, body) {
+            if (error) {
+               return res.status(500).json({ success: false, error: error }).end('');
+            } else {
+                if(body.message == undefined){
+                    body.map(e => {
+                        let query = {$set: {LayPrice: e.LayPrice1, LaySize: e.LaySize1, BackPrice: e.BackPrice1, BackSize: e.BackSize1, status: e.GameStatus}};
+                        let filter = {eventId: req.body.eventId, marketId: e.SelectionId};
+                        DB.FancyOdds.updateOne(filter, query).then((result)=>{   
+                            //console.log("successfully updated")
+                        });
+                        marketIds = marketIds.filter(d => {return d !=e.SelectionId});
+                    });
+                    let cond = {marketId: {$in: marketIds}, status: {$ne: "CLOSED"}};
+                    let updateDs = {$set: {status: "CLOSED"}};
+                    DB.FancyOdds.updateMany(cond, updateDs).then((result)=>{   
+                        //console.log("successfully updated")
+                    });
+                }
+           }
+        });
+    });
+       
+    await DB.FancyOdds.find({eventId:req.body.eventId, status: {$ne: "CLOSED"}}).then((marketType)=>{
+    var datafancy = marketType.map(async(item)=>{
+        let fobject= {};
+        runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
+        fobject.marketData = item
+        fobject.runners =runnersData;
+        return fobject;
         
-
-                   let fobject= {};
-             
-                runnersData  = await DB.FancyRunner.find({marketId:item.marketId})
-        
-                    fobject.marketData = item
-                    fobject.runners =runnersData;
-    
-                    return fobject;
-         
-            })
-
-
-            Promise.all(datafancy).then(FancyData=>{
-
-                // console.log(FancyData)
-
-                res.send({status:1,message:"fancy market type and runners",data:FancyData})
-
-            })
-           
-
-        })
-    
-    
-    }
-
+      });
+      Promise.all(datafancy).then(FancyData=>{
+        res.send({status:1, message:"fancy market type and runners",data:FancyData})
+      })
+      
+    })    
+}
 
 // store marketType
 
 exports.storeMarketType = async (req,res)=>{
-
     await DB.matchOdds.deleteMany().then((done)=>{
         if(done){
             DB.FancyOdds.deleteMany().then((done)=>{
@@ -853,167 +727,230 @@ exports.storeMarketType = async (req,res)=>{
                     DB.matchRunner.deleteMany().then((done)=>{
                         if(done){
                             DB.FancyRunner.deleteMany().then((done)=>{
-                               
-            
                             })
-
-
                         }
-                       
                     })
-
                 }
-               
            })
         }
-       
     })
     
-
-
-
-
     DB.event.find().then((events)=>{
         if(!events){
             return  res.send({status:false, message:"no events stored"})
         }
-        
-        events.map((item,index)=>{
-
-            let eventIds= item.eventId
-            Request.post({
-                "headers": { "X-Application" : properties.APPKey,"Accept" : "application/json", "X-Authentication" : properties.BetFairToken, "content-type": "application/json" },
-                "url": properties.BetFairAPIURL,
-                "body": JSON.stringify(
-                    
-                    [
-                        {
-                            "jsonrpc": "2.0",
-                            "method": "SportsAPING/v1.0/listMarketCatalogue",
-                            "params": {
-                                "filter": {
-                                    "eventIds": [eventIds],
-                                    // "marketIds": [marketIds]
-                                    
-                                },
-                                "maxResults": "200",
-                                "marketProjection": [
-                                    // "COMPETITION",
-                                    // "EVENT",
-                                    // "EVENT_TYPE",
-                                    "RUNNER_DESCRIPTION",
-                                    // "RUNNER_METADATA",
-                                    "MARKET_START_TIME"
-                                ]
-                            },
-                            "id": 1
-                        }
-                    ]
-                    
-             )
-            }, (error, response, body) => {
-                if(error) {
-                    return console.log(error);
-                }
-                var bodyData = JSON.parse(body)
-                                // console.log(bodyData)
-                                // return res.json(bodyData)
-
-               
-
-                var matchOdds =  bodyData[0].result.filter((item)=> {
-                    return item.marketName == "Match Odds";
-                })
-                // console.log(matchOdds + "lkjk")
-
-                var fancyOdds =  bodyData[0].result.filter((item)=> {
-                    // return item.marketName === "Over";
-                    return item.marketName != "Match Odds";
-                    // return item.marketName.includes("Over");
-                })
-                // console.log(fancyOdds)
-                // return res.json(fancyOdds)
-
-                // var sortedObjs = _.sortBy(fancyOdds, 'marketId').reverse().slice(0,5);
-                // console.log(fancyOdds)
-
-                matchOdds.map((item,index)=>{
-
-                    
-                    var matchOdds = new DB.matchOdds({
+        for(let i = 0; i<events.length; i++){
+            let eventIds= events[i].eventId;
+            let options = {
+                "headers": { "content-type": "application/json" },
+                "url": "http://142.93.36.1/api/v1/fetch_data?Action=listMarketTypes",
+                "qs": {"EventID": eventIds},
+                json: true
+            }
+            rps(options).then(body => {
+                let data = body.filter(e => e.marketName == "Match Odds");
+                data.map((item,index)=>{
+                    let matchOddsObj = {
                         eventId: eventIds,
+                        eventType: events[i].eventType,
                         marketId:item.marketId,
                         marketName: item.marketName,
                         marketStartTime:item.marketStartTime
-            
-                    })
-                   matchOdds.save()
+                    }
+                    let matchOdds = new DB.matchOdds(matchOddsObj);
+                   matchOdds.save(function(err,result){ 
+                    if (err){ 
+                        console.log(err); 
+                    } 
+                    else{ 
+                        console.log(result) 
+                    } 
+                    }) 
 
                    item.runners.map((item1,index)=>{
-            
-                  var matchRunner = new DB.matchRunner({
+                    var matchRunner = new DB.matchRunner({
                         marketId:item.marketId,
                         selectionId: item1.selectionId,
-                        runnerName:item1.runnerName
-            
+                        runnerName:item1.runnerName,
+                        eventId: eventIds
                     })
-
-                    matchRunner.save()
-
+                    matchRunner.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
                    })
-                   
-                   
-
                 })
 
+                
 
-                fancyOdds.map((item,index)=>{
+        }).catch(function (err) {
+            console.log(err.message);
 
+        });
+        let option1 = {
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookSession",
+            "qs": {"match_id": eventIds},
+            json: true
+        }
+        rps(option1).then(body => {
+            if(body.message == undefined){
+                body.map((item,index)=>{
                     var FancyOdds = new DB.FancyOdds({
                         eventId: eventIds,
-                        marketId:item.marketId,
-                        marketName: item.marketName,
-                        marketStartTime:item.marketStartTime
-            
+                        marketId:item.SelectionId,
+                        marketName: item.RunnerName,
+                        LayPrice: item.LayPrice1,
+                        LaySize: item.LaySize1,
+                        BackPrice: item.BackPrice1,
+                        BackSize: item.BackSize1,
+                        status: item.GameStatus
                     })
-            
-                    FancyOdds.save()
-
-                item.runners.map((item1,index)=>{
-            
+                    FancyOdds.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
                     var FancyRunner = new DB.FancyRunner({
-                          marketId:item.marketId,
-                          selectionId: item1.selectionId,
-                          runnerName:item1.runnerName
-              
+                          marketId:item.SelectionId,
+                          selectionId: item.SelectionId,
+                          runnerName:item.RunnerName,
                       })
-  
-                      FancyRunner.save()
-  
-                     })
+                      FancyRunner.save(function(err,result){ 
+                        if (err){ 
+                            console.log(err); 
+                        } 
+                        else{ 
+                            console.log(result) 
+                        } 
+                    }) 
 
-                }) 
-            });
-        })
-        res.send({status:true, message:"events stored successfully"})
+                })
+            }
+        }).catch(function (err) {
+            console.log(err.message)
+        });
+        
+        if(i == events.length-1){
+            res.send({status:true, message:"events stored successfully"})
+        }
+    }
 
-    })
+    }).catch(function (err) {
+        return err;
+
+     });
 
 }
+
+exports.storeFancyOddsCron = (req, res) => {
+    DB.event.find().then((events)=>{
+        if(!events){
+            return  res.send({status:false, message:"no events stored"})
+        }
+        for(let i = 0; i<events.length; i++){
+            let eventIds= events[i].eventId;
+            let options = {
+                "headers": { "content-type": "application/json" },
+                "url": "http://142.93.36.1/api/v1/listMarketBookSession",
+                "qs": {"match_id": eventIds},
+                json: true
+            }
+            
+            rps(options).then(body => {
+                if(body.message == undefined){
+                    body.map((item,index)=>{
+                        DB.FancyOdds.find({eventId: eventIds, marketId:item.SelectionId}, function(err, data){
+                            if(err){
+                               // console.log(err);
+                            }
+                            if(data.length >0){
+                                let cond = {eventId: eventIds,marketId:item.SelectionId};
+                                let updateVal = {
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                }
+                                DB.FancyOdds.update(cond, updateVal);
+                            } else{
+                                var FancyOdds = new DB.FancyOdds({
+                                    eventId: eventIds,
+                                    marketId:item.SelectionId,
+                                    marketName: item.RunnerName,
+                                    LayPrice: item.LayPrice1,
+                                    LaySize: item.LaySize1,
+                                    BackPrice: item.BackPrice1,
+                                    BackSize: item.BackSize1,
+                                    status: item.GameStatus
+                                })
+                                FancyOdds.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                       // console.log(result) 
+                                    } 
+                                }) 
+                                var FancyRunner = new DB.FancyRunner({
+                                      marketId:item.SelectionId,
+                                      selectionId: item.SelectionId,
+                                      runnerName:item.RunnerName,
+                                  })
+                                  FancyRunner.save(function(err,result){ 
+                                    if (err){ 
+                                        console.log(err); 
+                                    } 
+                                    else{ 
+                                        //console.log(result) 
+                                    } 
+                                }) 
+                            }
+                        });
+                        
+                    })
+                }
+            }).catch(function (err) {
+                console.log(err.message)
+            });
+
+            if(i == events.length-1){
+                res.send({status:true, message:"events stored successfully"})
+            }
+        }
+    })
+}
+
 
 
 //get DBliveEvents
 exports.getDbliveEvents = async (req,res)=>{
-
-   await DB.event.find().then((events)=>{
-        if(!events){
-            return  res.send({status:false, message:"no events stored"})
-        }
-
-else
- res.json(events)
-
-})
+    let eventType = req.body.eventType;
+    if(eventType != undefined){
+        await DB.event.find({eventType:eventType}).then((events)=>{
+            if(!events){
+                return  res.send({status:false, message:"no events stored"})
+            }
+            return res.send({status: 200, message:'live events list', data: events});
+        })
+    } else {
+        await DB.event.find().then((events)=>{
+            if(!events){
+                return  res.send({status:false, message:"no events stored"})
+            }
+            return res.send({status: 200, message:'live events list', data: events});
+        })
+    }
+    
 
 }
 
@@ -1036,16 +973,13 @@ exports.changePassword = (req,res)=>{
                         }else{
                             return res.send({status:true, message:"Updated Successfully"})
                         }
-                    })
-                
-
+                    });
             }
         }).catch((error)=>{
             console.log("catch=========",error)
         })
     } catch (error) {
-        console.log("try =========catch=========",error)
-
+        console.log("try =========catch=========",error);
     }
 }
 
@@ -1056,12 +990,10 @@ exports.changePasswordByUser = (req,res)=>{
         DB.user.findOne({userName:req.body.userName}).then((changeuser)=>{
             if(!changeuser){
                 return res.send({status:false, message:"User Not Found"})
-
             }
            var oldpassword = req.body.oldPassword
            var result = compareSync(oldpassword,changeuser.password);
             if(result){
-
                 var salt = genSaltSync(10);
                 var hash2= hashSync(req.body.newPassword, salt);
                 changeuser.password  = hash2
@@ -1073,11 +1005,7 @@ exports.changePasswordByUser = (req,res)=>{
                             return res.send({status:true, message:"Updated Successfully"})
                         }
                     })
-                
             }
-
-
-
         }).catch((error)=>{
             console.log("catch=========",error)
         })
@@ -1089,7 +1017,6 @@ exports.changePasswordByUser = (req,res)=>{
 
 
 exports.lockMatchOdds = (req,res) =>{
-
     DB.matchOdds.findOne({marketId:req.body.marketId}).then((updatedMatchOdds)=>{
         if (updatedMatchOdds.isEnabled == true) {
             updatedMatchOdds.isEnabled = false
@@ -1097,11 +1024,9 @@ exports.lockMatchOdds = (req,res) =>{
         else{
             updatedMatchOdds.isEnabled = true
         }
-
         updatedMatchOdds.save().then((saved)=>{
             if(saved){
                 return res.send({Data:updatedMatchOdds})
-
             }
        })
 
@@ -1301,7 +1226,11 @@ exports.superAdminUpDown = async(req,res)=>{
 exports.userPL = async (req,res)=>{
   
     try{
-
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        if (!startDate || !endDate){
+            return res.send({status: false, message: 'Kindly share the date'});
+        }
         masters = await Utils.getAllMasterusers(req.body.masterName);
 
       Promise.all(masters).then((Data)=>{
@@ -1315,7 +1244,7 @@ exports.userPL = async (req,res)=>{
         var mergedData = [].concat.apply([], Data);
         mergedData.map((item,index)=>{
             // add sports id
-            cricketData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+            cricketData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
             // cricketData.push(DB.betting.find({clientName:item.userName,status:"settled",marketType:"Fancy"}));
         })
 
@@ -1336,47 +1265,51 @@ exports.userPL = async (req,res)=>{
                 }));
 
             })
-
+            
             Promise.all(MarketDATA).then(DATA=>{
-                // console.log(DATA)
-
-
-
                 let finalobject = [];
-
-
-                DATA.map((item)=>{
-                let object = {};
-                    var profit2=0;
-                   var loss2=0;
-                   var fancyprofit=0;
-                   var fancyloss=0;
-
-               item.map((childItem)=>{
-                   if(childItem.marketType=="Fancy"){
-                    fancyprofit = fancyprofit + childItem.profit,
-                    fancyloss = fancyloss + childItem.liability
-
-                    //    console.log(childItem.profit)
-                    //    console.log(childItem.liability)
-
-
-                   }
-                profit2 = profit2 + childItem.profit,
-                loss2 = loss2 + childItem.liability
-
-               })
-               object.userName = item[0].clientName
-               object.fancyProfitLoss = fancyprofit - fancyloss
-               object.ProfitLoss = profit2 - loss2
-                 finalobject.push(object)
-  
+                let len = DATA.length;
+                DATA.map(async(item, i)=>{
+                    let object = {};
+                    var fancyprofit=0;
+                    var cricketProfit =0;
+                    var soccerProfit = 0;
+                    var tennisProfit = 0;
+                    var mCommision = 0;
+                      item.map((childItem)=>{
+                        mCommision = mCommision + childItem.mCommision;
+                        if(childItem.marketType=="Fancy"){
+                            fancyprofit = fancyprofit + childItem.P_L
+                        } else {
+                            if (childItem.eventType == 4) {
+                                cricketProfit = cricketProfit+ childItem.P_L
+                            } else if (childItem.eventType == 2) {
+                                tennisProfit = tennisProfit+ childItem.P_L
+                            } else if(childItem.eventType == 1) {
+                                soccerProfit = soccerProfit+ childItem.P_L
+                            }
+                        }
+                        
+        
+                       })
+                    //    object.data =item;
+                    object.userName = item[0].clientName
+                    var master = await Utils.getMyprofile(item[0].clientName);
+                    admin = await Utils.getMyprofile(master.master);
+                    object.Commission = admin.Commission;
+                    object.fancyProfitLoss = fancyprofit
+                    object.cricketProfit = cricketProfit
+                    object.soccerProfit = soccerProfit
+                    object.tennisProfit = tennisProfit;
+                    object.mCommision  = mCommision;
+                    object.ProfitLoss = cricketProfit + soccerProfit + tennisProfit
+                    finalobject.push(object);
+                    if (len == i+1) {
+                        return res.json(finalobject);
+                    }
                  })
-                return res.json(finalobject)   
-   
-
-             })      
-
+                 
+             })
             })
 
         })      
@@ -1396,20 +1329,25 @@ catch(error){
 exports.adminUserPL = async (req,res) =>{
 
     try{
-            masters = await Utils.getAllAdminMasters(req.body.adminName);
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        if (!startDate || !endDate){
+            return res.send({status: false, message: 'Kindly share the date'});
+        }
+           let masters = await Utils.getAllAdminMasters(req.body.adminName);
             const Users = [];
     
     
-          masters.map((item,index)=>{
-                Users.push( Utils.getAllMasterusers(item.userName));
-                  });
+          masters.map((item,index)=>{   
+                Users.push(Utils.getAllMasterusers(item.userName));
+            });
     
           Promise.all(Users).then((Data)=>{
-                
+               // console.log(Data)
             let bettingData = []
             var mergedData = [].concat.apply([], Data);
             mergedData.map((item,index)=>{
-                bettingData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+                bettingData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
             })
     
             Promise.all(bettingData).then(data=>{
@@ -1437,37 +1375,42 @@ exports.adminUserPL = async (req,res) =>{
             //  console.log(DATA)
             //  return res.json(DATA)
               masterData = DATA.map(async(item)=>{
-                    let object = {};
-                   
-                        var profit2=0;
-                       var loss2=0;
-                       var fancyprofit=0;
-                       var fancyloss=0;
+                let object = {};
+                var fancyprofit=0;
+                var cricketProfit =0;
+                var soccerProfit = 0;
+                var tennisProfit = 0;
+                var mCommision = 0;
                   item.map((childItem)=>{
-
+                    mCommision = mCommision + childItem.mCommision;
                     if(childItem.marketType=="Fancy"){
-                        fancyprofit = fancyprofit + childItem.profit,
-                        fancyloss = fancyloss + childItem.liability
-    
-                        //    console.log(childItem.profit)
-                        //    console.log(childItem.liability)
-    
-    
-                       }
-
-                    profit2 = profit2 + childItem.profit,
-                    loss2 = loss2 + childItem.liability
+                        fancyprofit = fancyprofit + childItem.P_L
+                    } else {
+                        if (childItem.eventType == 4) {
+                            cricketProfit = cricketProfit+ childItem.P_L
+                        } else if (childItem.eventType == 2) {
+                            tennisProfit = tennisProfit+ childItem.P_L
+                        } else if(childItem.eventType == 1) {
+                            soccerProfit = soccerProfit+ childItem.P_L
+                        }
+                    }
+                   
     
                    })
                 //    object.data =item;
-                   object.userName = item[0].clientName
-                   master = await Utils.getMyprofile(item[0].clientName);
-                   object.master = master.master
-                   object.fancyProfitLoss = fancyprofit - fancyloss
-                   object.ProfitLoss = profit2 - loss2
-          
-                    return object
-                     })
+                object.userName = item[0].clientName
+                var master = await Utils.getMyprofile(item[0].clientName);
+                object.master = master.master
+                admin = await Utils.getMyprofile(master.master);
+                object.Commission = admin.Commission;
+                object.admin =  admin.admin
+                object.fancyProfitLoss = fancyprofit
+                object.cricketProfit = cricketProfit
+                object.soccerProfit = soccerProfit
+                object.tennisProfit = tennisProfit
+                object.mCommision = mCommision;
+                return object
+                })
                      finaloriginal.push(finalobject);
 
                       Promise.all(masterData).then(finalData=>{
@@ -1496,24 +1439,35 @@ exports.adminUserPL = async (req,res) =>{
                                 finalmasterarray.map((item,index)=>{
 
                                     let  masterProfitloss = {};
-                                    // console.log(item)
+                                    var cricketPL = 0;
+                                    var tennisPL = 0;
+                                    var soccerPL = 0;
+                                    var fancyPL = 0;
                                     var masterPL = 0;
-                                    var masterfancyPL = 0;
+                                    var mCommision = 0;
                                     item.map((childitem)=>{
-                                        masterfancyPL = masterfancyPL + childitem.fancyProfitLoss
-                                        masterPL = masterPL + childitem.ProfitLoss
-
+                                        masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
+                                        cricketPL = cricketPL + childitem.cricketProfit;
+                                        tennisPL = tennisPL + childitem.tennisProfit;
+                                        soccerPL = soccerPL + childitem.soccerProfit;
+                                        fancyPL = fancyPL + childitem.fancyProfitLoss;
+                                        mCommision = mCommision+ childitem.mCommision;
                                     })
 
-                                    masterProfitloss.master = item[0].master
+                                    masterProfitloss.master = item[0].master;
+                                    masterProfitloss.Commission = item[0].Commission;
                                     masterProfitloss.profitLoss = masterPL
-                                    masterProfitloss.fancyPL = masterfancyPL
+                                    masterProfitloss.cricketPL = cricketPL;
+                                    masterProfitloss.tennisPL = tennisPL;
+                                    masterProfitloss.soccerPL = soccerPL;
+                                    masterProfitloss.mCommision = mCommision;
+                                    masterProfitloss.fancyprofitLoss = fancyPL;
 
 
                                     // return item.master: masterPL
                                     masterArray.push(masterProfitloss);
 
-                                })  
+                                })
                               
                                 // console.log(masterArray)
                         return res.json({userPL:mergedfinalData,masterPL:masterArray})
@@ -1673,6 +1627,11 @@ exports.adminUserPL = async (req,res) =>{
     exports.superAdminUserPL = async (req,res) =>{
 
         try{
+            let startDate = req.body.startDate;
+            let endDate = req.body.endDate;
+            if (!startDate || !endDate){
+                return res.send({status: false, message: 'Kindly share the date'});
+            }
                 masters = await Utils.getAllMasters();
                 const Users = [];
         
@@ -1686,7 +1645,7 @@ exports.adminUserPL = async (req,res) =>{
                 let bettingData = []
                 var mergedData = [].concat.apply([], Data);
                 mergedData.map((item,index)=>{
-                    bettingData.push(DB.betting.find({clientName:item.userName,status:"settled"}));
+                    bettingData.push(DB.betting.find({clientName:item.userName,status:"settled",createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}}));
                 })
         
                 Promise.all(bettingData).then(data=>{
@@ -1714,42 +1673,43 @@ exports.adminUserPL = async (req,res) =>{
         
               var masterData=  DATA.map(async(item)=>{
                         let object = {};
-                       
-                            var profit2=0;
-                           var loss2=0;
-                           var fancyprofit=0;
-                           var fancyloss=0;
+                        var fancyprofit=0;
+                        var cricketProfit =0;
+                        var soccerProfit = 0;
+                        var tennisProfit = 0;
+                        var mCommision = 0;
                        item.map((childItem)=>{
+                           mCommision = mCommision + childItem.mCommision;
                         if(childItem.marketType=="Fancy"){
-                            fancyprofit = fancyprofit + childItem.profit,
-                            fancyloss = fancyloss + childItem.liability
-        
-        
-                           }
-
-                        profit2 = profit2 + childItem.profit,
-                        loss2 = loss2 + childItem.liability
+                            fancyprofit = fancyprofit + childItem.P_L
+                        } else {
+                            if (childItem.eventType == 4) {
+                                cricketProfit = cricketProfit+ childItem.P_L
+                            } else if (childItem.eventType == 2) {
+                                tennisProfit = tennisProfit+ childItem.P_L
+                            } else if(childItem.eventType == 1) {
+                                soccerProfit = soccerProfit+ childItem.P_L
+                            }
+                        }
+                       
         
                        })
                     //    object.data =item;
-                       object.userName = item[0].clientName
-                       var master = await Utils.getMyprofile(item[0].clientName);
-                       object.master = master.master
-                       admin = await Utils.getMyprofile(master.master);
-                       object.admin =  admin.admin
-                       object.fancyProfitLoss = fancyprofit - fancyloss
-                       object.ProfitLoss = profit2 - loss2
-
-                    
-            
-          
+                        object.userName = item[0].clientName
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        object.master = master.master
+                        admin = await Utils.getMyprofile(master.master);
+                        object.admin =  admin.admin
+                        object.Commission = admin.Commission;
+                        object.fancyProfitLoss = fancyprofit
+                        object.cricketProfit = cricketProfit
+                        object.soccerProfit = soccerProfit
+                        object.tennisProfit = tennisProfit;
+                        object.mCommision = mCommision;
                         return object
-                         })
-   
-    
-    
+                        })
+                         
                          Promise.all(masterData).then(finalData=>{
-    
                             var mergedfinalData = [].concat.apply([], finalData);
   
                     
@@ -1772,18 +1732,29 @@ exports.adminUserPL = async (req,res) =>{
                                 finalmasterarray.map((item,index)=>{
 
                                     let  masterProfitloss = {};
-                                    var masterPL = 0;
+                                    var cricketPL = 0;
+                                    var tennisPL = 0;
+                                    var soccerPL = 0;
                                     var fancyPL = 0;
+                                    var masterPL = 0;
+                                    var mCommision = 0;
                                     item.map((childitem)=>{
-                                        masterPL = masterPL + childitem.ProfitLoss
-                                        fancyPL = fancyPL + childitem.fancyProfitLoss
-
-
+                                        masterPL = masterPL + childitem.cricketProfit + childitem.tennisProfit + childitem.soccerProfit;
+                                        cricketPL = cricketPL + childitem.cricketProfit;
+                                        tennisPL = tennisPL + childitem.tennisProfit;
+                                        soccerPL = soccerPL + childitem.soccerProfit;
+                                        fancyPL = fancyPL + childitem.fancyProfitLoss;
+                                        mCommision = mCommision+ childitem.mCommision;
                                     })
 
-                                    masterProfitloss.admin = item[0].admin
+                                    masterProfitloss.admin = item[0].admin;
+                                    masterProfitloss.Commission = item[0].Commission;
                                     masterProfitloss.profitLoss = masterPL
-                                    masterProfitloss.fancyprofitLoss = fancyPL
+                                    masterProfitloss.cricketPL = cricketPL;
+                                    masterProfitloss.tennisPL = tennisPL;
+                                    masterProfitloss.soccerPL = soccerPL;
+                                    masterProfitloss.fancyprofitLoss = fancyPL;
+                                    masterProfitloss.mCommision = mCommision;
 
 
                                     // return item.master: masterPL
@@ -1820,8 +1791,7 @@ exports.adminUserPL = async (req,res) =>{
     exports.addNews = function (req, res, next) {
         var news = new DB.news({
             newsTitle: req.body.newsTitle,
-            active: req.body.active,
-            newsID: req.body.newsID
+            active: req.body.active
         })
         news.save().then((result) => {
             return res.status(200).json({ status: 'Success', message: 'News added successfully', "data":result});
@@ -1841,7 +1811,7 @@ exports.adminUserPL = async (req,res) =>{
 
     //code added by shreesh
     exports.updateNews = function (req, res, next) {
-        DB.news.updateOne({_id:req.params.id},{ $set: req.body }).then((result) => {
+        DB.news.findOneAndUpdate({_id:req.body.id},{ $set: req.body }).then((result) => {
             return res.status(200).json({ status: 'Success', message: 'News updated successfully', "data":result});
         }).catch ((err)=> {
             return res.status(500).json({ success: false, error: err }).end('');
@@ -1850,8 +1820,8 @@ exports.adminUserPL = async (req,res) =>{
 
     //code added by shreesh
     exports.deleteNews = function (req, res, next) {
-        DB.news.remove({_id:req.params.id}).then((result) => {
-            return res.status(200).json({ status: 'Success', message: 'News deleted successfully', "data":result});
+        DB.news.remove({_id:req.body.id}).then((result) => {
+            return res.status(200).json({ status: 'Success', message: 'News deleted successfully'});
         }).catch ((err)=> {
             return res.status(500).json({ success: false, error: err }).end('');
         });
@@ -1899,6 +1869,7 @@ exports.adminUserPL = async (req,res) =>{
             }
             
             DB.betting.aggregate([
+                { $sort : { createdDate : -1 } },
                 { 
                     "$match": { "eventID": parseInt(eventID) } 
                 },
@@ -2016,6 +1987,55 @@ exports.adminUserPL = async (req,res) =>{
         }
 
     }
+
+    exports.getBettingBasedOnSuperMaster = (req, res) => {
+        let admin = req.query.superMaster;
+        let eventId = req.query.event_id;
+        if(!admin || !eventId) {
+            return  res.send({status:false, message:"Kindly check the data"});
+        }
+        DB.user.find({admin:admin}).select('userName -_id').then(data =>{
+            let d = [];
+            data.map(e => d.push(e.userName));
+            DB.user.aggregate([
+                {
+                    $match: {"master":{$in:d}}
+                },
+                {
+                    $lookup: {
+                        from: 'bettings',
+                        localField: "_id",
+                        foreignField: "userid",
+                        as: "bettingData"
+                    }
+                },
+                {
+                    $project: {
+                        userName:1,
+                        Name:1,
+                        master:1,
+                        bettingData: {
+                            $filter: {
+                                input: '$bettingData',
+                                as: "dt",
+                                cond: {
+                                    $eq:["$$dt.eventID", parseInt(eventId)]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]).then(result => {
+                return res.status(200).json({ status: 'Success', "data":result});
+            })
+
+        })
+        
+
+    }
+
+
+    
     // Is suspend the fancy odds && is ball running fancy
     exports.suspendOrIsBallRunningFancyOdds = (req, res) =>{
         let marketId = req.body.marketId;
@@ -2082,3 +2102,769 @@ exports.adminUserPL = async (req,res) =>{
     }
     
     
+
+async function getEventID(EventTypeID) {
+    let compsData = await getCompitions(EventTypeID);
+    let eventID = [];
+    for(let i=0;i<compsData.length;i++){
+        let compID = compsData[i].competition.id;
+        let dts =await dataSet(EventTypeID, compID);
+        eventID.push(...dts);
+        if(i == compsData.length-1){
+        return eventID;
+        }
+    }
+}
+
+async function getCompitions(EventTypeID){
+        let options = {
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/fetch_data?Action=listCompetitions",
+            "qs": {"EventTypeID": EventTypeID},
+            json: true
+        };
+         return rps(options).then(body => {
+           return body;
+    });
+}
+
+async function dataSet(EventTypeID, compID){
+    let options = {"headers": { "content-type": "application/json" },
+    "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEvents",
+    "qs": {"EventTypeID": EventTypeID, "CompetitionID": compID},
+    json:true
+}
+    return rps(options).then(body => {
+        return body;
+
+}).catch(function (err) {
+   return err;
+});
+}
+  
+// function getAllMatch(matchName, callback){
+//     var options = {
+//         method: 'GET',
+//         url: properties.rapid_api_All_match,
+//         headers: {
+//             'x-rapidapi-host': properties.rapidapi_host,
+//             'x-rapidapi-key': properties.rapidapi_key,
+//             useQueryString: properties.useQueryString
+//         },
+//         json:true
+//     };
+//     Request(options, function (error, response, body) {
+//         if (error) {
+//             console.log(error);
+//         } else {
+//             let d = ''
+//             if (body != undefined) {
+//                 body.matchList.matches.filter(e => {
+//                     if(e.series.name.indexOf(matchName) != -1){
+//                         let winningTeam = '';
+//                         if(e.status == 'COMPLETED'){
+//                             winningTeam = e.currentMatchState.split('win')[0]
+//                         }
+//                         d = {
+//                             seriesid: e.series.id,
+//                             matchid: e.id,
+//                             status: e.status,
+//                             winningTeam: winningTeam
+//                         }
+//                     }
+//                 });
+//             }
+//             callback(d);
+//         }
+//     });
+// }
+
+// function getCricektScore (match_id, callback){
+//     var options = {
+//         method: 'GET',
+//         url: properties.rapid_api_cricket_url,
+//         qs: match_id,
+//         headers: {
+//             'x-rapidapi-host': properties.rapidapi_host,
+//             'x-rapidapi-key': properties.rapidapi_key,
+//             useQueryString: properties.useQueryString
+//         },
+//         json: true
+//     };
+
+//     Request(options, function (error, response, body) {
+//         if (error) {
+//             console.log(error);
+//         } else {
+//             if(body.fullScorecard!= undefined){
+//                 //console.log(body)
+//                 callback(body.fullScorecard.innings[0]);
+//             }
+//             else
+//             callback(undefined)
+//         }
+
+
+//     }); 
+// }
+  
+  
+// getAllMatch('India v England', function(data) {
+//     getCricektScore(data, score =>{
+//         if(score != undefined){
+//             let overSplit = score.over.split('.');
+//             if(overSplit[1] == 0){
+//                 var Scorequery = {matchName: 'India v England'};
+//                 let Scoreupdate = {$set: {matchName: 'India v England',winner:data.winningTeam, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                 let options = { upsert: true, new: true, setDefaultsOnInsert: true };
+//                 DB.scoreCard.findOne(Scorequery, function(error, resultSet){
+//                     if(resultSet != null){
+//                         let overWicket = score.wicket - resultSet.wickets;
+//                         let overRun = score.run - resultSet.runs;
+//                         Scoreupdate = {$set: {matchName: 'India v England',winner:data.winningTeam,overWicket:overWicket, overRun:overRun, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                     }
+//                     DB.scoreCard.update(Scorequery, Scoreupdate, options, function(error, result) {
+//                         if (error)
+//                         console.log(error);
+//                     });
+//                     score.batsmen.map(e => {
+//                         let batsmenQuery = {matchName:'India v England', "batsmen.id": { "$eq": e.id }},
+//                         isOut = 'not out';
+//                         if (e.howOut != 'not out' && e.howOut != '') {
+//                             isOut = 'out' ;
+//                         }
+//                         let batsmenInsertQuery = {matchName:'India v England'};
+//                         let batsmeninset = {$push:{"batsmen":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut, fallOfWicket: e.fallOfWicket}}};
+//                         DB.scoreCard.findOne(batsmenQuery).then(batsmn => {
+//                             if (batsmn!= null){
+//                                 batsmn.batsmen.map(d => {
+//                                     let batmsnQuery = {matchName:'India v England', "batsmen.id": { "$eq": e.id }};
+//                                     let batsmenUpdate = {$set:{"batsmen.$.name": e.name, "batsmen.$.run": e.runs, "batsmen.$.four": e.fours, "batsmen.$.six": e.sixes, "batsmen.$.isOut": isOut, "batsmen.$.fallOfWicket": e.fallOfWicket}};
+//                                     DB.scoreCard.updateOne(batmsnQuery, batsmenUpdate, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                     if(d.fallOfWicket != null){
+//                                         let fwr = d.fallOfWicket.split("-");
+//                                         let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                     if (batsmn.fallOfWicket.length <= 0) {
+//                                         DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                             if (error)
+//                                             console.log(error);
+//                                         });
+//                                     } else {
+//                                         let queryOffwt = {matchName:'India v England', "fallOfWicket.wicket": { "$ne": fwr[0] }};
+//                                         DB.scoreCard.update(queryOffwt, UpdatedVal, function(error, result) {
+//                                             if (error)
+//                                             console.log(error);
+//                                         });
+
+//                                     }
+//                                 }
+//                                 })
+
+//                             } else {
+//                                 if(e.howOut != 'not out' && e.howOut != ''){
+//                                     let fwr = e.fallOfWicket.split("-");
+//                                     let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                     DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                         if (error)
+//                                         console.log(error);
+//                                     });
+//                                 }
+//                                 DB.scoreCard.update(batsmenInsertQuery, batsmeninset, function(error, result) {
+//                                     if (error){
+//                                         console.log(error)
+//                                     };
+//                                 });
+//                             }
+//                         })
+                    
+//                     });
+//                     score.bowlers.map(e => {
+//                         let bowlersQuery = {matchName:'India v England', "bowlers.id": { "$eq": e.id }},
+//                         bowlersInsertQuery = {matchName:'India v England'},
+//                         bowlersInsert = {$push:{"bowlers":[{id: e.id, name: e.name, wickets: e.wickets}]}};
+//                         DB.scoreCard.findOne(bowlersQuery).then(bowlersData => {
+//                             if (bowlersData!= null){
+//                                 bowlersData.bowlers.map(d => {
+//                                     let bowlQuery = {matchName:'India v England', "bowlers.id": { "$eq": e.id }},
+//                                     bowlersUpdateData = {$set:{"bowlers.$.name": e.name, "bowlers.$.wickets": e.wickets}};
+//                                     DB.scoreCard.update(bowlQuery, bowlersUpdateData, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                 })
+
+//                             } else {
+//                                 DB.scoreCard.update(bowlersInsertQuery, bowlersInsert, function(error, result) {
+//                                     if (error){
+//                                         console.log(error)
+//                                     };
+//                                 });
+//                             }
+//                         })
+//                     });
+//                 });
+//             }
+//         }
+        
+//     })
+// });
+//DB.scoreCard.findOne({eventId: 0,'batsmen.name':{'$eq':'Rohit Sharma'}}).then(eventData => {console.log(eventData) })
+// function updateScoreCard (eventName){
+//     getAllMatch(eventName, function(data) {
+//         getCricektScore(data, score =>{
+//             if(score != undefined){
+//                 let overSplit = score.over.split('.');
+//                 if(overSplit[1] == 0){
+//                     var Scorequery = {matchName: eventName};
+//                     let Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                     let options = { upsert: true, new: true, setDefaultsOnInsert: true };
+//                     DB.scoreCard.findOne(Scorequery, function(error, resultSet){
+//                         if(resultSet != null){
+//                             let overWicket = score.wicket - resultSet.wickets;
+//                             let overRun = score.run - resultSet.runs;
+//                             Scoreupdate = {$set: {matchName: eventName,winner:data.winningTeam,overWicket:overWicket, overRun:overRun, status:data.status, runningTeam: score.name, runs: score.run, overs: score.over, wickets: score.wicket}};
+//                         }
+//                         DB.scoreCard.update(Scorequery, Scoreupdate, options, function(error, result) {
+//                             if (error)
+//                             console.log(error);
+//                         });
+//                         score.batsmen.map(e => {
+//                             let batsmenQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }},
+//                             isOut = 'not out';
+//                             if (e.howOut != 'not out' && e.howOut != '') {
+//                                 isOut = 'out' ;
+//                             }
+//                             let batsmenInsertQuery = {matchName:eventName};
+//                             let batsmeninset = {$push:{"batsmen":{id: e.id, name: e.name, run: e.runs, four: e.fours, six: e.sixes, isOut: isOut, fallOfWicket: e.fallOfWicket}}};
+//                             DB.scoreCard.findOne(batsmenQuery).then(batsmn => {
+//                                 if (batsmn!= null){
+//                                     batsmn.batsmen.map(d => {
+//                                         let batmsnQuery = {matchName:eventName, "batsmen.id": { "$eq": e.id }};
+//                                         let batsmenUpdate = {$set:{"batsmen.$.name": e.name, "batsmen.$.run": e.runs, "batsmen.$.four": e.fours, "batsmen.$.six": e.sixes, "batsmen.$.isOut": isOut, "batsmen.$.fallOfWicket": e.fallOfWicket}};
+//                                         DB.scoreCard.updateOne(batmsnQuery, batsmenUpdate, function(error, result) {
+//                                             if (error){
+//                                                 console.log(error)
+//                                             };
+//                                         });
+//                                         if(d.fallOfWicket != null){
+//                                             let fwr = d.fallOfWicket.split("-");
+//                                             let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                         if (batsmn.fallOfWicket.length <= 0) {
+//                                             DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                                 if (error)
+//                                                 console.log(error);
+//                                             });
+//                                         } else {
+//                                             let queryOffwt = {matchName:eventName, "fallOfWicket.wicket": { "$ne": fwr[0] }};
+//                                             DB.scoreCard.update(queryOffwt, UpdatedVal, function(error, result) {
+//                                                 if (error)
+//                                                 console.log(error);
+//                                             });
+    
+//                                         }
+//                                     }
+//                                     })
+    
+//                                 } else {
+//                                     if(e.howOut != 'not out' && e.howOut != ''){
+//                                         let fwr = e.fallOfWicket.split("-");
+//                                         let UpdatedVal = {$push:{fallOfWicket:[{wicket: fwr[0], run:fwr[1]}]}};
+//                                         DB.scoreCard.update(batsmenInsertQuery, UpdatedVal, function(error, result) {
+//                                             if (error)
+//                                             console.log(error);
+//                                         });
+//                                     }
+//                                     DB.scoreCard.update(batsmenInsertQuery, batsmeninset, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                 }
+//                             })
+                        
+//                         });
+//                         score.bowlers.map(e => {
+//                             let bowlersQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
+//                             bowlersInsertQuery = {matchName:eventName},
+//                             bowlersInsert = {$push:{"bowlers":[{id: e.id, name: e.name, wickets: e.wickets}]}};
+//                             DB.scoreCard.findOne(bowlersQuery).then(bowlersData => {
+//                                 if (bowlersData!= null){
+//                                     bowlersData.bowlers.map(d => {
+//                                         let bowlQuery = {matchName:eventName, "bowlers.id": { "$eq": e.id }},
+//                                         bowlersUpdateData = {$set:{"bowlers.$.name": e.name, "bowlers.$.wickets": e.wickets}};
+//                                         DB.scoreCard.update(bowlQuery, bowlersUpdateData, function(error, result) {
+//                                             if (error){
+//                                                 console.log(error)
+//                                             };
+//                                         });
+//                                     })
+    
+//                                 } else {
+//                                     DB.scoreCard.update(bowlersInsertQuery, bowlersInsert, function(error, result) {
+//                                         if (error){
+//                                             console.log(error)
+//                                         };
+//                                     });
+//                                 }
+//                             })
+//                         });
+//                     });
+//                 }
+//             }
+            
+//         })
+//     });
+// }
+
+exports.getBettedFancyOdds = async (req, res) => {
+    try {
+        let eventId = req.query.eventId;
+        let type = req.query.type;
+        if(!eventId || !type){
+            return res.send({status: false, message: 'Kindly provide the valid eventId'});
+        }
+        DB.betting.distinct('marketID',{eventID: eventId, settled: {"$ne":'settled'}, marketType:{"$eq":type}}).then(data => {
+            DB.FancyOdds.find({marketId: {"$in":data},"status": "CLOSED"}).then(fancyData => {
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: fancyData});
+            })
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+exports.getuserbasedOnAdmin = async (req, res) => {
+    try {
+        let adminUserName = req.query.userName;
+        if(!adminUserName) {
+            return res.send({status: false, message: 'Kindly provide the name'});
+        }
+        DB.user.distinct('userName',{admin: adminUserName}).then(data => {
+            DB.user.find({master: {'$in': data}}).then (userData =>{
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: userData});
+            });
+        });
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+    
+}
+
+exports.dumpNonBettingFancy = async (req, res) => {
+    try {
+        DB.betting.distinct('selectionID', {marketType: {'$eq': 'Fancy'}}).then(data => {
+            DB.FancyOdds.distinct('marketId',{marketId: {'$nin': data}}).then(userData => {
+                DB.FancyOdds.deleteMany({marketId: {'$in': userData}, status: 'CLOSED'}).then(result => {
+                    return res.send({status: 200});
+                })
+            })
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+    
+}
+exports.getUserInfo = async (req, res) => {
+    try {
+        let userName = req.query.userName;
+        DB.user.findOne({userName: userName}, {walletBalance:1, exposure: 1, userName: 1, profitLossChips:1, freeChips:1 }).then(user =>{
+            if(user != null){
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: user});
+            }
+            else{
+                return res.send({status: 200, message:'Fancy list has been fatched in data', data: []});
+            }
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+exports.addbetplacetime = async (req, res) => {
+    try {
+        let gameId = req.body.gameId;
+        let timeDuration = req.body.timeDuration;
+        let query = {gameId:gameId};
+        let updatedVal = {$set: {gameId:gameId, timeDuration: timeDuration}}
+        DB.betPlaceTime.update(query,updatedVal, { upsert: true }).then(data =>{
+            return res.send({status: 200, message:'Bet time has been updated successfully'});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+exports.getbetplacetime = async (req, res) => {
+    try {
+        let gameId = req.query.gameId;
+        let query = {gameId:gameId};
+        DB.betPlaceTime.findOne(query).then(data =>{
+            if (data != null)
+            return res.send({status: 200, message:'bettime data', data: data});
+            else
+            return res.send({status: 200, message:'bettime data', data: []});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+exports.activeInactiveNews = async (req, res) => {
+    try {
+        let id = req.body.id;
+        DB.news.findOne({_id: id}).then(data => {
+            if (data){
+                if (data.active == true) {
+                    data.active = false
+                } else {
+                    data.active = true
+                }
+            }
+            data.save();
+        });
+        DB.news.updateMany({_id: {$ne: id}}, {$set: {active: false}}).then(data =>{
+            return res.send({status:true, message:"Same has been updated"});
+        })
+        
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+exports.getactiveNews = async (req, res) => {
+    try {
+        DB.news.find({active: true}).then(data => {
+            return res.send({status:true, message:"Active news has been fetched", data: data});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+
+// exports.storeAllSports = async (req,res) => {
+//     DB.event_type.deleteMany();
+//     Request.get({
+//         "headers": { "content-type": "application/json" },
+//         "url": "http://142.93.36.1/api/v1/fetch_data?Action=listEventTypes",
+//         json: true
+//     }, (error, response, body) => {
+//         if(error) {
+//             return console.log(error);
+//         }
+//         body.map(e => {
+//             let d = {
+//                 eventType: e.eventType,
+//                 name: e.name,
+//                 marketCount: e.marketCount,
+//             };
+//             DB.event_type.insertMany(d);
+            
+//         })
+//         return res.send({status:true, message:"live sports data", data:bodyData})
+        
+//   });
+    
+
+// }
+
+exports.sportEnableDisable = async(req, res) => {
+    try {
+        let eventType = req.body.eventType;
+        DB.event_type.findOne({eventType: eventType}).then(data => {
+            if (data){
+                if (data.status == true) {
+                    data.status = false
+                } else {
+                    data.status = true
+                }
+            }
+            data.save().then(d => {
+                return res.send({status: true, message:"Sport has been updated"});
+            });
+            
+        });
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+exports.getallsports = async (req, res) => {
+    try {
+        DB.event_type.find().then(data=> {
+            return res.send({status:true, message:"Sports have been fetched", data: data});
+        })
+    } catch (error) {
+        return res.send({status:false, message:"Technical Error"});
+    }
+}
+// let df = [ { eventType: "1", name: "Soccer", marketCount: 2492 }, { eventType: "2", name: "Tennis", marketCount: 5578 }, { eventType: "4", name: "Cricket", marketCount: 22 }, { eventType: "7", name: "Horse Racing", marketCount: 831 }, { eventType: "4339", name: "Greyhound Racing", marketCount: 298 } ]
+// df.map(e => {
+//                 let d = {
+//                     eventType: e.eventType,
+//                     name: e.name,
+//                     marketCount: e.marketCount,
+//                 };
+//                 DB.event_type.insertMany(d);
+                
+//             })
+
+
+exports.getChipsData = async (req, res) => { //// get user chip data includes admin master username
+    try {
+        DB.user.aggregate([
+        {
+            $match:
+            {
+                Master: false, Admin: false, superAdmin: false
+            }
+        },
+        {
+            $lookup: {
+                from: "users", 
+                localField: "master",
+                foreignField: "userName",
+                as: "userInfo"
+            }
+        }, {
+            $addFields: 
+            {
+                "admin":"$userInfo.admin"
+            }
+            }
+        
+        ,{
+                $project: {
+                    "__v": 0,
+                    "createdAt":0,
+                    "status":0,
+                    "walletBalance":0,
+                    "exposure":0,
+                    "creditLimit":0,
+                    "creditGiven":0,
+                    "freeChips":0,
+                    "enableBetting":0,
+                    "blocked": 0,
+                    "Commission":0,
+                    "sessionCommission":0,
+                    "ref":0,
+                    "userSportsInfo":0,
+                    "completedCasinoGame":0,
+                    "winCasinoGame":0,
+                    "password":0,
+                    "passwordString":0,
+                    "Master": 0,
+                    "Admin":0,
+                    "superAdmin":0,
+                    "token":0,
+                    'userInfo':0
+                               
+                }
+            }
+    
+    ]).then(results => {
+        return res.status(200).json({ status: 'Success', "data": results});
+    });
+    
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+    }
+}
+
+exports.getLiveMatchOdds = async (req,res) => {
+    var eventId= req.body.eventId;
+    if(!eventId) {
+        return res.send({status:false, message:"Kindly share the eventid"})
+    }
+    DB.matchOdds.findOne({eventId:eventId}).then(data => {
+        if (data == null) {
+            return res.send({status:false, message:"Data not found"});
+        }
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": data.marketId}
+        }, (error, response, body) => {
+            if(error) {
+                return console.log(error);
+            }
+            //console.log(body)
+            const bodyData = JSON.parse(body)
+            return res.send({status:true, message:"live market odd", data:bodyData})
+        });
+    })
+    
+}
+
+
+
+
+exports.getAllFancyStack = async (req, res) => {  // get total stack of user in fancy case inludes user's admin master user name based on start time and end time
+    try {
+        let startDate = req.body.startDate;
+        let endDate = req.body.endDate;
+        DB.betting.aggregate([
+            {$match:{
+                createdDate: {$gte: new Date(startDate), $lt: new Date(endDate)}
+            }
+        },
+        
+            {
+              $lookup: {
+                from: "users", 
+                localField: "userid",
+                foreignField: "_id",
+                as: "userInfo"
+              }
+            }, {
+                $lookup: {
+                    from: "users", 
+                    localField: "userInfo.master",
+                    foreignField: "userName",
+                    as: "userInfos"
+                }
+            }, {
+                $addFields: 
+                {
+                    "userInfo.admin":"$userInfos.admin",
+                    "userInfo.master":"$userInfo.master",
+                    "userInfo.id":"$userInfo._id"
+                }
+                }
+            ,{
+                $project: {
+                    "__v": 0,
+                    "userInfo._id": 0,
+                    "userInfo.__v": 0,
+                    "userInfo.createdAt":0,
+                    "userInfo.status":0,
+                    "userInfo.walletBalance":0,
+                    "userInfo.exposure":0,
+                    "userInfo.profitLossChips":0,
+                    "userInfo.creditLimit":0,
+                    "userInfo.creditGiven":0,
+                    "userInfo.freeChips":0,
+                    "userInfo.enableBetting":0,
+                    "userInfo.blocked": 0,
+                    "userInfo.Commission":0,
+                    "userInfo.sessionCommission":0,
+                    "userInfo.ref":0,
+                    "userInfo.userSportsInfo":0,
+                    "userInfo.completedCasinoGame":0,
+                    "userInfo.winCasinoGame":0,
+                    "userInfo.userName":0,
+                    "userInfo.Name":0,
+                    "userInfo.password":0,
+                    "userInfo.passwordString":0,
+                    "userInfo.Master": 0,
+                    "userInfo.superAdmin":0,
+                    "userInfo.Admin":0,
+                    "userInfo.token":0,
+                    "userInfos":0,
+                    "_id":0,
+                    "createdAt":0,
+                    "createdDate":0,
+                    "sattlementType":0,
+                    "eventType":0,
+                    "userid":0,
+                    "IP":0,
+                    
+                    "description":0,
+                    "selection":0,
+                    "selectionID":0,
+                    "eventID":0,
+                    "marketID":0,
+                    "odds":0,
+                    "status":0,
+                    "bettype":0,
+                    "P_L":0,
+                    "profit":0,
+                    "liability":0,
+                    "betcode":0
+                               
+                }
+            }
+          ]).then(results => {
+              let d = results.filter(e => e.marketType == 'Fancy');
+                return res.status(200).json({ status: 'Success', "data": d});
+          });
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: err }).end('');
+    }
+}
+
+exports.storeMatchOddsCron = async (req, res) => {
+    try {
+        DB.event.distinct('eventId',{'active':true}).then(data => {
+            DB.matchRunner.distinct('marketId', {eventId:{'$in': data}}).then(ids => {
+                ids.map(e => {
+                    let marketID = e;
+                    Request.get({
+                        "headers": { "content-type": "application/json" },
+                        "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+                        "qs": {"market_id": marketID}
+                    }, (error, response, body) => {
+                        if(error) {
+                            return console.log(error);
+                        }
+                        if(body.length !=0){
+                            const bodyData = JSON.parse(body);
+                            bodyData.map(d => {
+                                d.runners.map(m => {
+                                    let back = m.ex.availableToBack[0].price;
+                                    let lay = m.ex.availableToLay[0].price;
+                                    let selectionId = m.selectionId;
+                                    DB.matchRunner.findOneAndUpdate({selectionId: selectionId}, {$set: {backOdds: back, layOdds: lay}}).then(done => {});
+                                })
+                            })
+                        } else {
+                            console.log("data is not coming from listMarketBookOdds Marketid: "+marketID+"");
+                        }
+                    });
+                })
+            })
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
+    }
+}
+
+exports.storeMatchOdds = async(req, res) => {
+    try {
+        let marketId = req.body.marketId;
+        if (!marketId){
+            return res.status({success: false, message:'kindly share the marketid'});
+        }
+        Request.get({
+            "headers": { "content-type": "application/json" },
+            "url": "http://142.93.36.1/api/v1/listMarketBookOdds",
+            "qs": {"market_id": marketId}
+        }, (error, response, body) => {
+            if(error) {
+                return console.log(error);
+            }
+            if(body.length !=0){
+                const bodyData = JSON.parse(body);
+                bodyData.map(d => {
+                    d.runners.map((m, i) => {
+                        let back = m.ex.availableToBack[0].price;
+                        let lay = m.ex.availableToLay[0].price;
+                        let selectionId = m.selectionId;
+                        DB.matchRunner.findOneAndUpdate({selectionId: selectionId}, {$set: {backOdds: back, layOdds: lay}}).then(done => {
+                            if(d.runners.length == i+1){
+                                return res.status(200).json({ status: 'Success', "data": 'Match odds have been updated successfully'});
+                            }
+                        });
+                    })
+                })
+            } else {
+                console.log("data is not coming from listMarketBookOdds Marketid: "+marketID+"");
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
+    }
+}

@@ -113,18 +113,18 @@ cron.schedule(" 2 * * * * *", function() {
   })
 })
 
-cron.schedule("* 22 * * *", function() {
-   Request.delete({
-     "headers": {"content-type": "application/json" },
-     "url": "http://65.1.37.38:4000/api/dumpNonBettingFancy",
-  }, (error,response,body) => {
-     if(error) {
-         return console.log(error);
-     }
-       console.log("Import data again");
+// cron.schedule("* 22 * * *", function() {
+//    Request.delete({
+//      "headers": {"content-type": "application/json" },
+//      "url": "http://65.1.37.38:4000/api/dumpNonBettingFancy",
+//   }, (error,response,body) => {
+//      if(error) {
+//          return console.log(error);
+//      }
+//        console.log("Import data again");
    
-  })
-})
+//   })
+// })
 
 cron.schedule("* 23 * * *", function() {
   Request.post({

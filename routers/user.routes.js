@@ -26,9 +26,9 @@ module.exports = function(router) {
     router.post('/visibleFancyRunners',Token.checkToken, Auth.visibleFancyRunners);
     router.post('/adminUpDown',Token.checkToken, Auth.adminUpDown);
     router.post('/superAdminUpDown',Token.checkToken, Auth.superAdminUpDown);
-    router.post('/userPL',Token.checkToken, Auth.userPL);
-    router.post('/adminUserPL',Token.checkToken, Auth.adminUserPL);
-    router.post('/superAdminUserPL',Token.checkToken,Token.checkToken, Auth.superAdminUserPL);
+    router.post('/userPL', Auth.userPL);
+    router.post('/adminUserPL', Auth.adminUserPL);
+    router.post('/superAdminUserPL', Auth.superAdminUserPL);
     router.post('/updateExposure',Token.checkToken, Account.updateExposure);
     router.post('/getEventExposure',Token.checkToken, Account.getEventExposure);
     router.post('/getTotalExposure',Token.checkToken, Account.getTotalExposure);
@@ -151,7 +151,7 @@ module.exports = function(router) {
     router.get('/storeFancyOddsCron', Auth.storeFancyOddsCron);
     router.post('/matchOddsBetSettlement',Token.checkToken, Account.matchOddsBetSettlement);
     router.post('/fancyOddsBetSettlement',Token.checkToken, Account.fancyOddsBetSettlement);
-    router.get('/getBettedFancyOdds',Token.checkToken, Auth.getBettedFancyOdds);
+    router.get('/getBettedFancyOdds', Auth.getBettedFancyOdds);
     router.get('/getuserbasedOnAdmin',Token.checkToken, Auth.getuserbasedOnAdmin);
     router.delete('/dumpNonBettingFancy', Auth.dumpNonBettingFancy);
     router.get('/getUserInfo',Token.checkToken, Auth.getUserInfo);

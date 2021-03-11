@@ -82,7 +82,6 @@ var userChipsInfoSchema = new mongoose.Schema({
 
 var depositSchema = new mongoose.Schema({
   createdAt: {type:String, default: new Date().toISOString().substring(0, 10)},
-  createdDate  :{type:String, default: new Date()},
   amount:{type:Number,required:true, default:0},
   accountHolderName:{type: mongoose.Schema.Types.ObjectId, ref: 'user'},
   depositedByName:{type:String},
@@ -90,21 +89,19 @@ var depositSchema = new mongoose.Schema({
   userName:{type:String,unique:false},
   balance:{type:Number,default:0},
   cash:{type:Boolean,default:false},
+},{timestamps: { createdAt: 'createdDate' }});
 
-})
 var withdrawSchema = new mongoose.Schema({
   createdAt: {type:String, default: new Date().toISOString().substring(0, 10)},
-  createdDate  :{type:String, default: new Date()},
   amount:{type:Number, default:0},
   accountHolderName:{type: mongoose.Schema.Types.ObjectId, ref: 'user'},
   withdrawInName:{type:String},
   withdrawIn:{type: mongoose.Schema.Types.ObjectId, ref: 'user'},
   userName:{type:String,unique:false},
   balance:{type:Number,default:0},
-  cash:{type:Boolean,default:false},
+  cash:{type:Boolean,default:false}
+},{timestamps: { createdAt: 'createdDate' }});
 
-
-})
 var accountSchema = new mongoose.Schema({
   createdAt: {type:String, default: new Date().toISOString().substring(0, 10)},
   userName:{type:String,unique:true},
