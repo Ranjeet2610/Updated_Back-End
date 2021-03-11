@@ -518,10 +518,18 @@ exports.getAccountStament = async (req, res) => {
 //place bet
 
 exports.placeBet = (req, res) => {
-    let no_of_runners = 0;
+    let Teamone = 0;
+    let Teamtwo = 0
+    let Teamthree = undefined;
     DB.matchRunner.find({eventId:req.body.eventID}).then((runners) => {
-        no_of_runners = runners.length;
+        console.log(runners[0].selectionId, runners[1].selectionId)
+        Teamone = runners[0].selectionId;
+        Teamtwo = runners[1].selectionId;
+        if (runners.length == 3) {
+            Teamthree = runners[2].selectionId;
+        }
     })
+    console.log(Teamone, Teamthree, Teamtwo)
     if (req.body.description) {
         // DB.betting.deleteMany({clientName:req.body.userName}).then((data) => {
         //     console.log(data);
@@ -534,8 +542,6 @@ exports.placeBet = (req, res) => {
         //         console.log('updatedUser:',updatedUser);
         //     })
         // })
-        let team1 = JSON.parse(req.body.description).name.split(' v ')[0];
-        let team2 = JSON.parse(req.body.description).name.split(' v ')[1];
 
         DB.user.findOne({userName:req.body.userName}).then((user) => {
             if(user){
@@ -546,26 +552,45 @@ exports.placeBet = (req, res) => {
                     ProfitLoss = req.body.loss;
                 }
                 // console.log(user.exposure);
-                DB.betting.find({clientName:req.body.userName, eventID: req.body.eventID}).then((bets) => {
-                    let exp1 = Utils.calculateExposure(bets, team1, team2, '');
-                    let exp2 = Utils.calculateExposure(bets, team2, team1, '');
-                    let exp3 = Utils.calculateExposure(bets, team1, team2, 'The Draw');
-                    if(exp3.loss !== null && exp3.profit !== null){
-                        let exposures = [exp1.loss-exp2.profit+exp3.loss, exp1.loss-exp3.profit+exp2.loss, 
-                            exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
-                            exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
-                        user.exposure = parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest(exposures));
-                    }else{
-                        if(no_of_runners === 3){
-                            user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss + exp2.loss);
+                DB.betting.find({clientName:req.body.userName, eventID: req.body.eventID, marketType: 'match odds'}).then((bets) => {
+                    let T1TotalPL = 0;
+                    let T2TotalPL = 0;
+                    let T3TotalPL = 0;
+                    bets.map(item => {
+                        if(item.bettype=='Back'){
+                            if(Teamone==item.selectionID){
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.stack);
+                            }
+                            if(Teamtwo==item.selectionID){
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.P_L);
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.stack);
+                            }
+                            if(Teamthree==item.selectionID){
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.stack);
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.stack);
+                            }
                         }else{
-                            if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
-                                user.exposure = parseFloat(user.exposure) - parseFloat(exp1.loss - exp2.profit);
-                            }else{
-                                user.exposure = parseFloat(user.exposure) - parseFloat(exp2.loss - exp1.profit);
+                            if(Teamone==item.selectionID){
+                                T1TotalPL = parseFloat(T1TotalPL)-parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.stack);
+                            }
+                            if(Teamtwo==item.selectionID){
+                                T2TotalPL = parseFloat(T2TotalPL)-parseFloat(item.P_L);
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.stack);
+                                T3TotalPL = parseFloat(T3TotalPL)+parseFloat(item.stack);
+                            }
+                            if(Teamthree==item.selectionID){
+                                T3TotalPL = parseFloat(T3TotalPL)-parseFloat(item.P_L);
+                                T2TotalPL = parseFloat(T2TotalPL)+parseFloat(item.stack);
+                                T1TotalPL = parseFloat(T1TotalPL)+parseFloat(item.stack);
                             }
                         }
-                    }
+                    })
                     // console.log('1:exp1:',exp1.loss-exp2.profit,' exp2:',exp2.loss-exp1.profit, ' user.exposure:', user.exposure);
                     var betting = new DB.betting ({
                         clientName: req.body.userName,
@@ -592,36 +617,68 @@ exports.placeBet = (req, res) => {
                         if(!saved){
                             return res.send({status:false, message:"Technical Error"})
                         }
-                        DB.betting.find({clientName:req.body.userName, eventID:req.body.eventID}).then((bets) => {
-                            let exp1 = Utils.calculateExposure(bets, team1, team2,'');
-                            let exp2 = Utils.calculateExposure(bets, team2, team1,'');
-                            let exp3 = Utils.calculateExposure(bets, team1, team2, 'The Draw');
-                            if(exp3.loss !== null && exp3.profit !== null){
-                                let exposures = [exp1.loss-exp2.profit+exp3.loss, exp1.loss-exp3.profit+exp2.loss, 
-                                exp2.loss-exp1.profit+exp3.loss, exp2.loss-exp3.profit+exp1.loss,
-                                exp3.loss-exp1.profit+exp2.loss, exp3.loss-exp2.profit+exp1.loss];
-                                user.exposure = user.exposure === 0?parseFloat(Utils.findTheGreatest(exposures)):parseFloat(user.exposure) - parseFloat(Utils.findTheGreatest(exposures));
-                            }else{
-                                if(no_of_runners === 3){
-                                    user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss + exp2.loss);
+                        DB.betting.find({clientName:req.body.userName, eventID:req.body.eventID, marketType: 'match odds'}).then((bets) => {
+                            let _T1TotalPL = 0;
+                            let _T2TotalPL = 0;
+                            let _T3TotalPL = 0;
+                            bets.map(item => {
+                                if(item.bettype=='Back'){
+                                    if(Teamone==item.selectionID){
+                                        _T1TotalPL = parseFloat(_T1TotalPL)+parseFloat(item.P_L);
+                                        _T2TotalPL = parseFloat(_T2TotalPL)-parseFloat(item.stack);
+                                        _T3TotalPL = parseFloat(_T3TotalPL)-parseFloat(item.stack);
+                                    }
+                                    if(Teamtwo==item.selectionID){
+                                        _T2TotalPL = parseFloat(_T2TotalPL)+parseFloat(item.P_L);
+                                        _T1TotalPL = parseFloat(_T1TotalPL)-parseFloat(item.stack);
+                                        _T3TotalPL = parseFloat(_T3TotalPL)-parseFloat(item.stack);
+                                    }
+                                    if(Teamthree==item.selectionID){
+                                        _T3TotalPL = parseFloat(_T3TotalPL)+parseFloat(item.P_L);
+                                        _T2TotalPL = parseFloat(_T2TotalPL)-parseFloat(item.stack);
+                                        _T1TotalPL = parseFloat(_T1TotalPL)-parseFloat(item.stack);
+                                    }
                                 }else{
-                                    if(exp1.loss - exp2.profit >= exp2.loss - exp1.profit){
-                                        user.exposure = parseFloat(user.exposure) + parseFloat(exp1.loss - exp2.profit);
-                                    }else{
-                                        user.exposure = parseFloat(user.exposure) + parseFloat(exp2.loss - exp1.profit);
+                                    if(Teamone==item.selectionID){
+                                        _T1TotalPL = parseFloat(_T1TotalPL)-parseFloat(item.P_L);
+                                        _T2TotalPL = parseFloat(_T2TotalPL)+parseFloat(item.stack);
+                                        _T3TotalPL = parseFloat(_T3TotalPL)+parseFloat(item.stack);
+                                    }
+                                    if(Teamtwo==item.selectionID){
+                                        _T2TotalPL = parseFloat(_T2TotalPL)-parseFloat(item.P_L);
+                                        _T1TotalPL = parseFloat(_T1TotalPL)+parseFloat(item.stack);
+                                        _T3TotalPL = parseFloat(_T3TotalPL)+parseFloat(item.stack);
+                                    }
+                                    if(Teamthree==item.selectionID){
+                                        _T3TotalPL = parseFloat(_T3TotalPL)-parseFloat(item.P_L);
+                                        _T2TotalPL = parseFloat(_T2TotalPL)+parseFloat(item.stack);
+                                        _T1TotalPL = parseFloat(_T1TotalPL)+parseFloat(item.stack);
                                     }
                                 }
+                            })
+                            let minVal = 0;
+                            let _minVal = 0;
+                            if (Teamthree != undefined) {
+                                minVal = Math.min(parseFloat(T2TotalPL), parseFloat(T1TotalPL), parseFloat(T3TotalPL));
+                                _minVal = Math.min(parseFloat(_T2TotalPL), parseFloat(_T1TotalPL), parseFloat(_T3TotalPL));
+                                
+                            } else {
+                                minVal = Math.min(parseFloat(T2TotalPL), parseFloat(T1TotalPL));
+                                _minVal = Math.min(parseFloat(_T2TotalPL), parseFloat(_T1TotalPL));
                             }
-                            if(parseFloat(user.exposure) >= 0){
-                                user.walletBalance = parseFloat(user.freeChips) + parseFloat(user.profitLossChips) - parseFloat(user.exposure);
-                            }else{
-                                user.walletBalance = parseFloat(user.freeChips) + parseFloat(user.profitLossChips);
-                                user.exposure = 0;
+                            console.log(minVal, _minVal);
+                            let sign = Math.sign(_minVal);
+                            if(sign != -1){
+                                user.exposure = parseFloat(user.exposure) + parseFloat(minVal);
+                                user.walletBalance = parseFloat(user.walletBalance) - parseFloat(minVal);
+                            } else {
+                                let d = Math.abs(_minVal) - Math.abs(minVal);
+                                user.exposure = parseFloat(user.exposure) + parseFloat(d);
+                                user.walletBalance = parseFloat(user.walletBalance) - parseFloat(d);
+                                
+                                
                             }
-                            //user.walletBalance = parseFloat(user.walletBalance) - parseFloat(user.exposure);
-                            // user.walletBalance = 50000;
-                            // user.exposure = 0;
-                            // DB.betting.deleteMany({clientName:req.body.userName}).then(() => {});
+                            
                             user.save().then((updatedUser)=>{
                                 return res.send({status:true,message:"Bet place successfully",data:updatedUser,bettingData:saved});
                             });
@@ -2269,9 +2326,9 @@ exports.getManualOdds = (req, res) => {
 exports.adminProfitAndLoss = async (req, res) => {
 
     try {
+        
         masters = await Utils.getAllAdminMasters(req.body.adminName);
         const Users = [];
-
 
         masters.map((item, index) => {
             Users.push(Utils.getAllMasterusers(item.userName));
@@ -2311,14 +2368,28 @@ exports.adminProfitAndLoss = async (req, res) => {
                     DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
+                        var mCommision = 0;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
                         item.map((childItem) => {
-                            profitLoss = profitLoss + childItem.P_L
+                            if (childItem.marketType == 'match odds'){
+                                let comm = admin.Commission;
+                                if (Math.sign(childItem.P_L) != -1){
+                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
+                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
+                                    let pl = parseFloat(childItem.P_L)- commissionVal;
+                                    profitLoss = profitLoss + pl;
+                                }
+                            } else{
+                                profitLoss = profitLoss + childItem.P_L;
+                            }
+                            
 
                         })
                         object.data = item;
-                        var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        object.mCommision = mCommision;
                         object.Commission = admin.Commission;
+                        object.master = admin.userName;
                         object.marketID = item[0].marketID
                         object.ProfitLoss = profitLoss
                         finalobject.push(object);
@@ -2398,13 +2469,25 @@ exports.superAdminProfitAndLoss = async (req, res) => {
                     DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
+                        var mCommision = 0;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
                         item.map((childItem) => {
-                            profitLoss = profitLoss + childItem.P_L
+                            if (childItem.marketType == 'match odds'){
+                                let comm = admin.Commission;
+                                if (Math.sign(childItem.P_L) != -1){
+                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
+                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
+                                    let pl = parseFloat(childItem.P_L)- commissionVal;
+                                    profitLoss = profitLoss + pl;
+                                }
+                            } else{
+                                profitLoss = profitLoss + childItem.P_L;
+                            }
 
                         })
                         object.data = item;
-                        var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        object.mCommision = mCommision;
                         object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.eventType = item[0].eventType
@@ -2492,13 +2575,25 @@ exports.masterProfitAndLoss = async (req, res) => {
                     DATA.map(async(item, i) => {
                         let object = {};
                         var profitLoss = 0;
+                        var mCommision = 0;
+                        var master = await Utils.getMyprofile(item[0].clientName);
+                        admin = await Utils.getMyprofile(master.master);
                         item.map((childItem) => {
-                            profitLoss = profitLoss + childItem.P_L
+                            if (childItem.marketType == 'match odds'){
+                                let comm = admin.Commission;
+                                if (Math.sign(childItem.P_L) != -1){
+                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
+                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
+                                    let pl = parseFloat(childItem.P_L)- commissionVal;
+                                    profitLoss = profitLoss + pl;
+                                }
+                            } else{
+                                profitLoss = profitLoss + childItem.P_L;
+                            }
 
                         })
                         object.data = item;
-                        var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        object.mCommision = mCommision;
                         object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.ProfitLoss = profitLoss

@@ -100,18 +100,18 @@ authRoutes(router);
  
 // });
 
-cron.schedule(" 2 * * * * *", function() {
-  Request.get({
-    "headers": {"content-type": "application/json" },
-    "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
-  }, (error,response,body) => {
-    if(error) {
-        return console.log(error);
-    }
-      console.log("Import data again");
+// cron.schedule(" 2 * * * * *", function() {
+//   Request.get({
+//     "headers": {"content-type": "application/json" },
+//     "url": "http://65.1.37.38:4000/api/storeFancyOddsCron",
+//   }, (error,response,body) => {
+//     if(error) {
+//         return console.log(error);
+//     }
+//       console.log("Import data again");
   
-  })
-})
+//   })
+// })
 
 // cron.schedule("* 22 * * *", function() {
 //    Request.delete({
@@ -126,39 +126,39 @@ cron.schedule(" 2 * * * * *", function() {
 //   })
 // })
 
-cron.schedule("* 23 * * *", function() {
-  Request.post({
-    "headers": {"content-type": "application/json" },
-    "url": "http://65.1.37.38:4000/api/storeLiveEvents",
-  }, (error,response,body) => {
-    if(error) {
-        return console.log(error);
-    } else {
-      Request.post({
-        "headers": {"content-type": "application/json" },
-        "url": "http://65.1.37.38:4000/api/storeMarketType",
-      }, (error,response,body) => {
-          if(error) {
-              return console.log(error);
-          }
-          console.log("Import data again");
-      })
-    }
-  })
-})
+// cron.schedule("* 23 * * *", function() {
+//   Request.post({
+//     "headers": {"content-type": "application/json" },
+//     "url": "http://65.1.37.38:4000/api/storeLiveEvents",
+//   }, (error,response,body) => {
+//     if(error) {
+//         return console.log(error);
+//     } else {
+//       Request.post({
+//         "headers": {"content-type": "application/json" },
+//         "url": "http://65.1.37.38:4000/api/storeMarketType",
+//       }, (error,response,body) => {
+//           if(error) {
+//               return console.log(error);
+//           }
+//           console.log("Import data again");
+//       })
+//     }
+//   })
+// })
 
-cron.schedule(" 2 * * * * *", function() {
-  Request.get({
-    "headers": {"content-type": "application/json" },
-    "url": "http://65.1.37.38:4000/api/storeMatchOddsCron",
-  }, (error,response,body) => {
-    if(error) {
-        return console.log(error);
-    }
-      console.log("Import data again");
+// cron.schedule(" 2 * * * * *", function() {
+//   Request.get({
+//     "headers": {"content-type": "application/json" },
+//     "url": "http://65.1.37.38:4000/api/storeMatchOddsCron",
+//   }, (error,response,body) => {
+//     if(error) {
+//         return console.log(error);
+//     }
+//       console.log("Import data again");
   
-  })
-})
+//   })
+// })
 
 // //call auth routing
 app.listen(properties.PORT, (req, res) => {

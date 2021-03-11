@@ -121,9 +121,9 @@ module.exports = function(router) {
     router.post('/getManualOdds',Token.checkToken, Account.getManualOdds);
     
 
-    router.post('/adminProfitAndLoss',Token.checkToken, Account.adminProfitAndLoss);
-    router.post('/superAdminProfitAndLoss',Token.checkToken, Account.superAdminProfitAndLoss);
-    router.post('/masterProfitAndLoss',Token.checkToken, Account.masterProfitAndLoss);
+    router.post('/adminProfitAndLoss', Account.adminProfitAndLoss);
+    router.post('/superAdminProfitAndLoss', Account.superAdminProfitAndLoss);
+    router.post('/masterProfitAndLoss', Account.masterProfitAndLoss);
     router.post('/chipSettlementForUser',Token.checkToken, Account.chipSettlementForUser);
     router.post('/chipSettlementForMaster', Token.checkToken,Account.chipSettlementForMaster);
     router.post('/chipSettlementForAdmin',Token.checkToken, Account.chipSettlementForAdmin);

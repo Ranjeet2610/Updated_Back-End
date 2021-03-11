@@ -552,12 +552,11 @@ exports.listMarketType = async (req,res) => {
 // store event id of today and tommorow matches
 
 exports.storeLiveEvents = async (req,res) => {
-
-   await DB.event.deleteMany().then((done)=>{
+    let today = new Date()
+    let oldDate = new Date(today.setDate(today.getDate()-3));
+   await DB.event.deleteMany({createdDate: {$lt:oldDate}}).then((done)=>{
         // console.log("events deleted")
     })
-    
-    const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 5)
     DB.event_type.find({status:true},async function (err, events){
@@ -566,16 +565,17 @@ exports.storeLiveEvents = async (req,res) => {
                 let data = await getEventID(events[i].eventType);
                 data.map((item,index)=>{
                     // console.log(item.event.id + item.event.name + item.event.openDate)
-                var event = new DB.event({
-                    eventId:item.event.id,
-                    eventName: item.event.name,
-                    OpenDate:item.event.openDate,
-                    eventType: events[i].eventType
-                
-                })
-            
-                event.save();
-            
+                    DB.event.findOne({eventId:item.event.id}).then(e => {
+                        if (e == null){
+                            var event = new DB.event({
+                                eventId:item.event.id,
+                                eventName: item.event.name,
+                                OpenDate:item.event.openDate,
+                                eventType: events[i].eventType
+                            })
+                            event.save();
+                        }
+                    })
                 });
                 if (events.length -1 == i) {
                     res.send({status:true, message:"events stored successfully"})
@@ -2494,7 +2494,9 @@ exports.dumpNonBettingFancy = async (req, res) => {
     try {
         DB.betting.distinct('selectionID', {marketType: {'$eq': 'Fancy'}}).then(data => {
             DB.FancyOdds.distinct('marketId',{marketId: {'$nin': data}}).then(userData => {
-                DB.FancyOdds.deleteMany({marketId: {'$in': userData}, status: 'CLOSED'}).then(result => {
+                var dt = new Date();
+                let dates = new Date(dt.setDate(dt.getDate()-3));
+                DB.FancyOdds.deleteMany({marketId: {'$in': userData}, status: 'CLOSED', createdDate: {$lt:dates}}).then(result => {
                     return res.send({status: 200});
                 })
             })

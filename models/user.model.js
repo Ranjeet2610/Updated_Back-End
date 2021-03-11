@@ -160,14 +160,14 @@ var eventSchema = new mongoose.Schema({
   settlementStatus: {type:String, defualt:'open'},
   settledValue: {type:String, defualt: 0}
 
-})
+},{timestamps: { createdAt: 'createdDate' }})
 
 let eventTypes = new mongoose.Schema({
   eventType: {type: Number, default: 0},
   name:{type:String},
   marketCount: {type: Number, default: 0},
   status: {type: Boolean, default: true},
-})
+},{timestamps: { createdAt: 'createdDate' }})
 
 // match odds
 
@@ -179,7 +179,7 @@ var matchOddSchema = new mongoose.Schema({
   marketName:{type:String,unique:false},
   marketStartTime:{type:String,unique:false}
 
-})
+},{timestamps: { createdAt: 'createdDate' }})
 // fancy odds
 
 var FancyOddSchema = new mongoose.Schema({
@@ -202,7 +202,7 @@ var FancyOddSchema = new mongoose.Schema({
   settlementStatus: {type:String, defualt:'open'},
   settledValue: {type:String, defualt: 0}
 
-})
+},{timestamps: { createdAt: 'createdDate' }})
 
 // match runner
 var matchRunnerSchema = new mongoose.Schema({
@@ -213,7 +213,7 @@ var matchRunnerSchema = new mongoose.Schema({
   backOdds:{type:String,unique:false},
   layOdds:{type:String,unique:false}
 
-})
+},{timestamps: { createdAt: 'createdDate' }})
 
 // fancy runner
 
@@ -224,7 +224,7 @@ var FancyRunnerSchema = new mongoose.Schema({
   isRunnersVisible:{type:Boolean,default:false},
 
 
-})
+},{timestamps: { createdAt: 'createdDate' }})
 
 var manualMatchOddSchema = new mongoose.Schema({
  eventID:{type:Number,default:0},
@@ -268,7 +268,7 @@ let score = new mongoose.Schema({
   winner: {type:String,default:0}
   
   
-});
+},{timestamps: { createdAt: 'createdDate' }})
 
 bettingSchema.pre('save', function (next) {
 
