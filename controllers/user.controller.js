@@ -2905,3 +2905,13 @@ exports.storeMatchOdds = async(req, res) => {
         return res.status(500).json({ success: false, message: 'Something went wrong', error: error }).end('');
     }
 }
+
+// DB.betting.find({clientName:'Raja44', marketType:'match odds'}).then(d=> {
+//     let s = 0;
+//     d.map(e => {
+//         s = parseFloat(s)+parseFloat(e.P_L);
+//     });
+//     console.log(s);
+// })
+// '-300'
+// 711

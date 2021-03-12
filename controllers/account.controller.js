@@ -1988,23 +1988,25 @@ exports.adminProfitAndLoss = async (req, res) => {
                         let object = {};
                         var profitLoss = 0;
                         var mCommision = 0;
+                        let fancyPL = 0;
                         var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        let admin = await Utils.getMyprofile(master.master);
+                        let comm = admin.Commission;
+                        
+                        let matchOddsPL = 0;
                         item.map((childItem) => {
                             if (childItem.marketType == 'match odds'){
-                                let comm = admin.Commission;
-                                if (Math.sign(childItem.P_L) != -1){
-                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
-                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
-                                    let pl = parseFloat(childItem.P_L)- commissionVal;
-                                    profitLoss = profitLoss + pl;
-                                }
+                                matchOddsPL = parseFloat(matchOddsPL) + parseFloat(childItem.P_L);
                             } else{
-                                profitLoss = profitLoss + childItem.P_L;
+                                fancyPL = parseFloat(fancyPL) + childItem.P_L;
                             }
-                            
 
                         })
+                        if (Math.sign(matchOddsPL) != -1){
+                            mCommision = parseFloat(matchOddsPL)*parseInt(comm)/100;
+                            matchOddsPL = parseFloat(matchOddsPL) - mCommision;
+                        }
+                        profitLoss = parseFloat(fancyPL) + parseFloat(matchOddsPL);
                         object.data = item;
                         object.mCommision = mCommision;
                         object.Commission = admin.Commission;
@@ -2089,28 +2091,31 @@ exports.superAdminProfitAndLoss = async (req, res) => {
                         let object = {};
                         var profitLoss = 0;
                         var mCommision = 0;
+                        let fancyPL = 0;
                         var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        let admin = await Utils.getMyprofile(master.master);
+                        let comm = admin.Commission;
+                        
+                        let matchOddsPL = 0;
                         item.map((childItem) => {
                             if (childItem.marketType == 'match odds'){
-                                let comm = admin.Commission;
-                                if (Math.sign(childItem.P_L) != -1){
-                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
-                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
-                                    let pl = parseFloat(childItem.P_L)- commissionVal;
-                                    profitLoss = profitLoss + pl;
-                                }
+                                matchOddsPL = parseFloat(matchOddsPL) + parseFloat(childItem.P_L);
                             } else{
-                                profitLoss = profitLoss + childItem.P_L;
+                                fancyPL = parseFloat(fancyPL) + childItem.P_L;
                             }
 
                         })
+                        if (Math.sign(matchOddsPL) != -1){
+                            mCommision = parseFloat(matchOddsPL)*parseInt(comm)/100;
+                            matchOddsPL = parseFloat(matchOddsPL) - mCommision;
+                        }
+                        profitLoss = parseFloat(fancyPL) + parseFloat(matchOddsPL);
                         object.data = item;
                         object.mCommision = mCommision;
                         object.Commission = admin.Commission;
                         object.marketID = item[0].marketID
                         object.eventType = item[0].eventType
-                        object.ProfitLoss = profitLoss
+                        object.ProfitLoss = profitLoss;
                         finalobject.push(object)
                         if (DATA.length == i+1) {
                             return res.json(finalobject)
@@ -2195,22 +2200,25 @@ exports.masterProfitAndLoss = async (req, res) => {
                         let object = {};
                         var profitLoss = 0;
                         var mCommision = 0;
+                        let fancyPL = 0;
                         var master = await Utils.getMyprofile(item[0].clientName);
-                        admin = await Utils.getMyprofile(master.master);
+                        let admin = await Utils.getMyprofile(master.master);
+                        let comm = admin.Commission;
+                        
+                        let matchOddsPL = 0;
                         item.map((childItem) => {
                             if (childItem.marketType == 'match odds'){
-                                let comm = admin.Commission;
-                                if (Math.sign(childItem.P_L) != -1){
-                                    let commissionVal = parseFloat(childItem.P_L)*parseInt(comm)/100;
-                                    mCommision = parseFloat(mCommision)+ parseFloat(commissionVal);
-                                    let pl = parseFloat(childItem.P_L)- commissionVal;
-                                    profitLoss = profitLoss + pl;
-                                }
+                                matchOddsPL = parseFloat(matchOddsPL) + parseFloat(childItem.P_L);
                             } else{
-                                profitLoss = profitLoss + childItem.P_L;
+                                fancyPL = parseFloat(fancyPL) + childItem.P_L;
                             }
 
                         })
+                        if (Math.sign(matchOddsPL) != -1){
+                            mCommision = parseFloat(matchOddsPL)*parseInt(comm)/100;
+                            matchOddsPL = parseFloat(matchOddsPL) - mCommision;
+                        }
+                        profitLoss = parseFloat(fancyPL) + parseFloat(matchOddsPL);
                         object.data = item;
                         object.mCommision = mCommision;
                         object.Commission = admin.Commission;
